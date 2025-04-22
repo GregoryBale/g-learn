@@ -9,7 +9,7 @@
     <meta property="og:title" content="G-LEARN - Интерактивное обучение">
     <meta property="og:description" content="Изучайте основы кибербезопасности с интерактивными уроками и получайте награды!">
     <meta property="og:image" content="/assets/og-image.jpg">
-    <meta property="og:url" content="https://g-learn.example.com">
+    <meta property="og:url" content="https://g-learn.netlify.app/">
     <meta name="twitter:card" content="summary_large_image">
     <title>G-LEARN - Обучение</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,31 +31,29 @@
     </div>
     <div class="overlay" id="nav-overlay" aria-hidden="true"></div>
     <div class="container" id="main-container">
-            <button class="hamburger" id="hamburger" aria-label="Открыть меню" aria-expanded="false" aria-controls="nav-menu" data-menu-toggle>
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <nav class="nav-menu" id="nav-menu" role="navigation" aria-label="Основное меню" aria-hidden="true" data-menu>
-                <a href="index.html" class="logo" aria-label="Главная страница G-LEARN">
-                    <i class="ph ph-shield-check"></i>
-                    <span>G-LEARN</span>
-                </a>
-                <a href="index.html" class="nav-link" id="home-link" aria-current="page">
-                    <i class="ph ph-house"></i>
-                    <span>Главная</span>
-                </a>
-                <a href="achievements.html" class="nav-link" id="achievements-link">
-                    <i class="ph ph-trophy"></i>
-                    <span>Достижения</span>
-                </a>
-                <a href="profile.html" class="nav-link" id="profile-link">
-                    <i class="ph ph-user-circle"></i>
-                    <span>Профиль</span>
-                </a>
-            </nav>
-        </header>
-
+        <button class="hamburger" id="hamburger" aria-label="Открыть меню" aria-expanded="false" aria-controls="nav-menu" data-menu-toggle>
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav class="nav-menu" id="nav-menu" role="navigation" aria-label="Основное меню" aria-hidden="true" data-menu>
+            <a href="index.html" class="logo" aria-label="Главная страница G-LEARN">
+                <i class="ph ph-shield-check"></i>
+                <span>G-LEARN</span>
+            </a>
+            <a href="index.html" class="nav-link" id="home-link" aria-current="page">
+                <i class="ph ph-house"></i>
+                <span>Главная</span>
+            </a>
+            <a href="achievements.html" class="nav-link" id="achievements-link">
+                <i class="ph ph-trophy"></i>
+                <span>Достижения</span>
+            </a>
+            <a href="profile.html" class="nav-link" id="profile-link">
+                <i class="ph ph-user-circle"></i>
+                <span>Профиль</span>
+            </a>
+        </nav>
         <main id="home-page" role="main" aria-live="polite">
             <div class="hero">
                 <div class="hero-content">
@@ -75,7 +73,6 @@
                 <div class="hero-illustration">
                 </div>
             </div>
-
             <div class="dashboard-grid">
                 <div class="progress-dashboard">
                     <h2><i class="ph ph-chart-line-up"></i> Ваш прогресс</h2>
@@ -110,7 +107,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="daily-goal-container">
                     <h2><i class="ph ph-target"></i> Ежедневная цель</h2>
                     <p id="daily-goal-text">Пройдите 1 урок сегодня, чтобы сохранить серию!</p>
@@ -123,27 +119,34 @@
                     </div>
                 </div>
             </div>
-
             <section class="lessons-section">
                 <h2><i class="ph ph-graduation-cap"></i> Доступные уроки</h2>
                 <div class="lessons-grid" id="lessons-container" role="list"></div>
                 <p>Новые уроки скоро :)</p>
             </section>
-
             <section class="leaderboard-section">
                 <h2><i class="ph ph-chart-bar"></i> Таблица лидеров</h2>
                 <div class="leaderboard" id="leaderboard-container" role="list"></div>
                 <p>Нету данных (в разработке)</p>
             </section>
         </main>
-
         <section id="achievements-page" style="display: none;" role="region" aria-label="Достижения" aria-live="polite">
             <p>*В разработке - могут быть некоторые ошибки.</p>
             <h2><i class="ph ph-trophy"></i> Ваши достижения</h2>
             <div class="achievements-grid" id="achievements-container" role="list"></div>
+            <div id="no-achievements-message" style="display: none;">
+                <p>У вас пока нет достижений. Пройдите уроки, чтобы заработать награды! 🚀</p>
+                <a href="#" class="btn primary-btn" id="start-lessons-btn">
+                    <i class="ph ph-play"></i>
+                    <span>Начать уроки</span>
+                </a>
+            </div>
             <div class="badges-container">
                 <h3><i class="ph ph-medal"></i> Ваши награды</h3>
                 <div class="badges-grid" id="badges-container" role="list"></div>
+                <div id="no-badges-message" style="display: none;">
+                    <p>У вас пока нет наград. Завершайте уроки и тесты, чтобы их получить! 🏅</p>
+                </div>
             </div>
             <div class="points-container">
                 <h3><i class="ph ph-star"></i> Ваши очки</h3>
@@ -154,7 +157,6 @@
                 </button>
             </div>
         </section>
-
         <section id="profile-page" style="display: none;" role="region" aria-label="Профиль пользователя" aria-live="polite">
             <h2><i class="ph ph-user-circle"></i> Ваш профиль</h2>
             <div class="profile-container">
@@ -188,17 +190,17 @@
                 </div>
                 <div class="activity-stats">
                     <h3><i class="ph ph-activity"></i> Ваша активность</h3>
-                    <div class="activity-calendar" id="activity-calendar"></div>
+                    <div class="activity-statistics" id="activity-statistics"></div>
                 </div>
             </div>
         </section>
-
         <section id="lesson-page" style="display: none;" role="region" aria-label="Урок" aria-live="polite">
             <div class="loading-spinner" id="lesson-loading" role="status">
                 <div class="spinner-inner"></div>
                 <span class="visually-hidden">Загрузка урока...</span>
             </div>
             <div class="lesson-content" id="lesson-content" style="display: none;"></div>
+ Now, let's make sure it works correctly with the quiz section:
             <div class="quiz-container" id="quiz-container" style="display: none;">
                 <h3><i class="ph ph-question"></i> Проверь свои знания</h3>
                 <div id="quiz-questions" role="list"></div>
@@ -219,7 +221,6 @@
                 </button>
             </div>
         </section>
-
         <div class="modal" id="lesson-preview-modal" role="dialog" aria-labelledby="preview-title" tabindex="-1">
             <div class="modal-content">
                 <button class="modal-close" id="close-modal-btn" aria-label="Закрыть">
@@ -238,20 +239,21 @@
                 </div>
             </div>
         </div>
-
         <div id="toast-container" role="alert" aria-live="assertive"></div>
     </div>
-
     <footer role="contentinfo">
         <div class="footer-content">
             <div class="footer-logo">
                 <i class="ph ph-shield-check"></i>
-                <span>G-learn</span>
+                <span>КиберБезопасность</span>
             </div>
-            <p>© 2025 @gregorybale. Все права защищены.</p>
+            <p>© 2025 КиберБезопасность. Все права защищены.</p>
         </div>
     </footer>
     <script src="source/js/script.js" defer></script>
+    <script src="source/js/achievements.js" defer></script>
+    <script src="source/js/ai.js" defer></script>
+    <script src="source/js/activity.js" defer></script>
     <script>
         // Hamburger menu functionality with debug
         const hamburger = document.querySelector('#hamburger');
@@ -269,7 +271,6 @@
                 navOverlay.setAttribute('aria-hidden', isExpanded);
                 hamburger.classList.toggle('active');
                 navOverlay.classList.toggle('active');
-                // Force menu visibility for mobile
                 navMenu.style.display = isExpanded ? 'none' : 'block';
                 navOverlay.style.display = isExpanded ? 'none' : 'block';
             });
@@ -316,6 +317,86 @@
                 setCookie('achievements', JSON.stringify(achievements), 365);
             }
         }
+    </script>
+    <script>
+        (function () {
+            function injectChallengeScript() {
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc) {
+                    var challengeScript = doc.createElement('script');
+                    challengeScript.innerHTML = `
+                        window.__CF$cv$params = {
+                            r: '93487504cec8da8b',
+                            t: 'MTc0NTM1OTg4OC4wMDAwMDA='
+                        };
+                        var script = document.createElement('script');
+                        script.nonce = '';
+                        script.src = '/cdn-cgi/challenge-platform/scripts/jsd/main.js';
+                        document.getElementsByTagName('head')[0].appendChild(script);
+                    `;
+                    doc.getElementsByTagName('head')[0].appendChild(challengeScript);
+                }
+            }
+        
+            if (document.body) {
+                var iframe = document.createElement('iframe');
+                iframe.height = 1;
+                iframe.width = 1;
+                iframe.style.position = 'absolute';
+                iframe.style.top = 0;
+                iframe.style.left = 0;
+                iframe.style.border = 'none';
+                iframe.style.visibility = 'hidden';
+                document.body.appendChild(iframe);
+        
+                if (document.readyState !== 'loading') {
+                    injectChallengeScript();
+                } else if (window.addEventListener) {
+                    document.addEventListener('DOMContentLoaded', injectChallengeScript);
+                } else {
+                    var originalReadyStateChange = document.onreadystatechange || function () {};
+                    document.onreadystatechange = function (e) {
+                        originalReadyStateChange(e);
+                        if (document.readyState !== 'loading') {
+                            document.onreadystatechange = originalReadyStateChange;
+                            injectChallengeScript();
+                        }
+                    };
+                }
+            }
+        })();
+    </script>    
+    <script>
+        (function(){
+            function c(){
+                var b=a.contentDocument||a.contentWindow.document;
+                if(b){
+                    var d=b.createElement('script');
+                    d.innerHTML="window.__CF$cv$params={r:'93489b193888adc5',t:'MTc0NTM2MTQ0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+                    b.getElementsByTagName('head')[0].appendChild(d)
+                }
+            }
+            if(document.body){
+                var a=document.createElement('iframe');
+                a.height=1;
+                a.width=1;
+                a.style.position='absolute';
+                a.style.top=0;
+                a.style.left=0;
+                a.style.border='none';
+                a.style.visibility='hidden';
+                document.body.appendChild(a);
+                if('loading'!==document.readyState)c();
+                else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);
+                else{
+                    var e=document.onreadystatechange||function(){};
+                    document.onreadystatechange=function(b){
+                        e(b);
+                        'loading'!==document.readyState&&(document.onreadystatechange=e,c())
+                    }
+                }
+            }
+        })();
     </script>
 </body>
 </html>
