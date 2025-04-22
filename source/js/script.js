@@ -2,7 +2,11 @@
  * Cybersecurity Learning Platform
  * Enhanced with modular structure, accessibility, and fixed navigation menu
  */
-
+const Analytics = {
+    trackEvent(eventName, data) {
+        console.log(`Analytics event: ${eventName}`, data);
+    }
+};
 /** Data Module */
 const Data = {
     course: {
@@ -691,17 +695,77 @@ const Data = {
         ]
     },
     achievements: [
-        { id: 'first_lesson', title: 'Первый шаг', description: 'Завершите первый урок', icon: '🏆', condition: (progress) => Object.values(progress).some(p => p.completed) },
-        { id: 'perfect_quiz', title: 'Гений теста', description: '100% на тесте', icon: '🎓', condition: (progress) => Object.values(progress).some(p => p.quizScore === 100) },
-        { id: 'streak_3', title: 'Серия 3 дня', description: 'Учитесь 3 дня подряд', icon: '🔥', condition: (stats) => stats.streak >= 3 },
-        { id: 'all_lessons', title: 'Мастер курса', description: 'Завершите все уроки', icon: '🏅', condition: (progress) => Object.values(progress).filter(p => p.completed).length >= 5 },
-        { id: 'streak_7', title: 'Стабильный прогресс', description: 'Учитесь 7 дней подряд', icon: '⚡', condition: (stats) => stats.streak >= 7 },
-        { id: 'night_owl', title: 'Ночная сова', description: 'Завершите урок после 23:00', icon: '🦉', condition: (activity) => activity.some(a => a.completed && new Date(a.timestamp).getHours() >= 23) },
-        { id: 'early_bird', title: 'Ранняя пташка', description: 'Завершите урок до 7:00', icon: '🐦', condition: (activity) => activity.some(a => a.completed && new Date(a.timestamp).getHours() < 7) },
-        { id: 'weekend_warrior', title: 'Воин выходных', description: 'Учитесь в выходные', icon: '🛡️', condition: (activity) => activity.some(a => {
-            const day = new Date(a.timestamp).getDay();
-            return a.completed && (day === 0 || day === 6);
-        }) },
+        {
+            id: 'first_lesson',
+            title: 'Первый шаг',
+            description: 'Завершите первый урок',
+            icon: '🏆',
+            condition: (progress) => Object.values(progress).some(p => p.completed)
+        },
+        {
+            id: 'perfect_quiz',
+            title: 'Гений теста',
+            description: '100% на тесте',
+            icon: '🎓',
+            condition: (progress) => Object.values(progress).some(p => p.quizScore === 100)
+        },
+        {
+            id: 'streak_3',
+            title: 'Серия 3 дня',
+            description: 'Учитесь 3 дня подряд',
+            icon: '🔥',
+            condition: (stats) => stats.streak >= 3
+        },
+        {
+            id: 'all_lessons',
+            title: 'Мастер курса',
+            description: 'Завершите все уроки',
+            icon: '🏅',
+            condition: (progress) => Object.values(progress).filter(p => p.completed).length >= 5
+        },
+        {
+            id: 'streak_7',
+            title: 'Стабильный прогресс',
+            description: 'Учитесь 7 дней подряд',
+            icon: '⚡',
+            condition: (stats) => stats.streak >= 7
+        },
+        {
+            id: 'night_owl',
+            title: 'Ночная сова',
+            description: 'Завершите урок после 23:00',
+            icon: '🦉',
+            condition: (progress, stats, activity = Activity.loadActivities()) => {
+                return activity.some(a => 
+                    a.type === Activity.activityTypes.LESSON_COMPLETED && 
+                    new Date(a.timestamp).getHours() >= 23
+                );
+            }
+        },
+        {
+            id: 'early_bird',
+            title: 'Ранняя пташка',
+            description: 'Завершите урок до 7:00',
+            icon: '🐦',
+            condition: (progress, stats, activity = Activity.loadActivities()) => {
+                return activity.some(a => 
+                    a.type === Activity.activityTypes.LESSON_COMPLETED && 
+                    new Date(a.timestamp).getHours() < 7
+                );
+            }
+        },
+        {
+            id: 'weekend_warrior',
+            title: 'Воин выходных',
+            description: 'Учитесь в выходные',
+            icon: '🛡️',
+            condition: (progress, stats, activity = Activity.loadActivities()) => {
+                return activity.some(a => {
+                    const day = new Date(a.timestamp).getDay();
+                    return a.type === Activity.activityTypes.LESSON_COMPLETED && (day === 0 || day === 6);
+                });
+            }
+        },
         {
             id: 'security_expert',
             title: 'Эксперт по безопасности',
@@ -714,10 +778,38 @@ const Data = {
         }
     ],
     badges: [
-        { id: 'novice', title: 'Новичок', description: 'Завершите 1 урок', icon: '🥉', condition: (progress) => Object.values(progress).filter(p => p.completed).length >= 1, points: 50 },
-        { id: 'scholar', title: 'Ученый', description: 'Наберите 100 очков', icon: '🥈', condition: (stats) => stats.points >= 100, points: 100 },
-        { id: 'security_enthusiast', title: 'Энтузиаст безопасности', description: 'Завершите 3 урока', icon: '🥇', condition: (progress) => Object.values(progress).filter(p => p.completed).length >= 3, points: 200 },
-        { id: 'quiz_master', title: 'Мастер тестов', description: 'Получите 90%+ на 3 тестах', icon: '📝', condition: (progress) => Object.values(progress).filter(p => p.quizScore >= 90).length >= 3, points: 150 },
+        {
+            id: 'novice',
+            title: 'Новичок',
+            description: 'Завершите 1 урок',
+            icon: '🥉',
+            condition: (progress) => Object.values(progress).filter(p => p.completed).length >= 1,
+            points: 50
+        },
+        {
+            id: 'scholar',
+            title: 'Ученый',
+            description: 'Наберите 100 очков',
+            icon: '🥈',
+            condition: (stats) => stats.points >= 100,
+            points: 100
+        },
+        {
+            id: 'security_enthusiast',
+            title: 'Энтузиаст безопасности',
+            description: 'Завершите 3 урока',
+            icon: '🥇',
+            condition: (progress) => Object.values(progress).filter(p => p.completed).length >= 3,
+            points: 200
+        },
+        {
+            id: 'quiz_master',
+            title: 'Мастер тестов',
+            description: 'Получите 90%+ на 3 тестах',
+            icon: '📝',
+            condition: (progress) => Object.values(progress).filter(p => p.quizScore >= 90).length >= 3,
+            points: 150
+        },
         {
             id: 'security_champion',
             title: 'Чемпион безопасности',
@@ -725,15 +817,40 @@ const Data = {
             icon: '🛡️',
             condition: (progress) => {
                 const completed = Object.values(progress).filter(p => p.completed);
-                if (completed.length !== 5) return false; // Проверяем, что завершены ВСЕ уроки
+                if (completed.length !== 5) return false;
                 const avgScore = completed.reduce((sum, p) => sum + p.quizScore, 0) / completed.length;
                 return avgScore >= 95;
             },
             points: 500
         },
-        { id: 'dedicated_learner', title: 'Преданный ученик', description: 'Учитесь 10 дней подряд', icon: '📚', condition: (stats) => stats.streak >= 10, points: 300 },
-        { id: 'sharing_is_caring', title: 'Делиться - значит заботиться', description: 'Поделитесь курсом с друзьями', icon: '🤝', condition: (actions) => actions.includes('shared_course'), points: 100 },
-        { id: 'feedback_provider', title: 'Даете обратную связь', description: 'Оставьте отзыв о курсе', icon: '💬', condition: (actions) => actions.includes('provided_feedback'), points: 75 }
+        {
+            id: 'dedicated_learner',
+            title: 'Преданный ученик',
+            description: 'Учитесь 10 дней подряд',
+            icon: '📚',
+            condition: (stats) => stats.streak >= 10,
+            points: 300
+        },
+        {
+            id: 'sharing_is_caring',
+            title: 'Делиться - значит заботиться',
+            description: 'Поделитесь курсом с друзьями',
+            icon: '🤝',
+            condition: (progress, stats, activity = Activity.loadActivities()) => {
+                return activity.some(a => a.type === Activity.activityTypes.COURSE_SHARED);
+            },
+            points: 100
+        },
+        {
+            id: 'feedback_provider',
+            title: 'Даете обратную связь',
+            description: 'Оставьте отзыв о курсе',
+            icon: '💬',
+            condition: (progress, stats, activity = Activity.loadActivities()) => {
+                return activity.some(a => a.type === 'feedback_provided');
+            },
+            points: 75
+        }
     ],
     leaderboard: [
     ],
@@ -891,6 +1008,7 @@ const DOM = {
         hamburger: document.getElementById('hamburger'),
         navMenu: document.getElementById('nav-menu'),
         navOverlay: document.getElementById('nav-overlay'),
+        activityStatistics: document.getElementById('activity-statistics'),
         lessonPreviewModal: document.getElementById('lesson-preview-modal'),
         previewTitle: document.getElementById('preview-title'),
         previewDescription: document.getElementById('preview-description'),
@@ -950,6 +1068,52 @@ const Utils = {
     }
 };
 
+const Progress = {
+    saveProgress() {
+        try {
+            // Сохраняем прогресс в localStorage
+            localStorage.setItem('cybersecurityProgress', JSON.stringify(this.progress));
+            // Проверяем, действительно ли данные сохранены
+            const savedData = localStorage.getItem('cybersecurityProgress');
+            if (savedData && JSON.parse(savedData)) {
+                console.log('Progress saved successfully:', this.progress);
+                return true; // Успешное сохранение
+            } else {
+                throw new Error('Failed to verify saved progress');
+            }
+        } catch (error) {
+            console.error('Error saving progress:', error);
+            UI.showToast('Не удалось сохранить прогресс. Проверьте настройки браузера.', '❌');
+            return false; // Ошибка сохранения
+        }
+    },
+
+    getProgress() {
+        try {
+            const saved = localStorage.getItem('cybersecurityProgress');
+            return saved ? JSON.parse(saved) : {
+                completedLessons: [],
+                quizScores: {},
+                points: 0,
+                streak: 0,
+                lastActivity: null,
+                achievements: []
+            };
+        } catch (error) {
+            console.error('Error loading progress:', error);
+            UI.showToast('Ошибка загрузки прогресса. Используется стандартный профиль.', '❌');
+            return {
+                completedLessons: [],
+                quizScores: {},
+                points: 0,
+                streak: 0,
+                lastActivity: null,
+                achievements: []
+            };
+        }
+    }
+};
+
 /** Storage Module */
 function loadProgress() {
     try {
@@ -989,15 +1153,11 @@ function loadProfile() {
 }
 
 function saveProgress() {
-    try {
-        localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
-        UI.updateProgressDisplay();
-        UI.checkAchievements();
-        UI.checkBadges();
-    } catch (error) {
-        console.error('Error saving progress:', error);
-        UI.showToast('Ошибка сохранения прогресса', '❌');
-    }
+    localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
+    UI.updateProgressDisplay();
+    UI.checkAchievements();
+    UI.checkBadges();
+    UI.showToast('Прогресс сохранён', '✅');
 }
 
 function saveStats() {
@@ -1187,6 +1347,8 @@ const UI = {
             State.userProgress[lessonId] = { status: 'in-progress', completed: false, quizCompleted: false, quizScore: 0 };
             UI.updateStreak();
             saveProgress();
+            // Log lesson started activity
+            Activity.logActivity(Activity.activityTypes.LESSON_STARTED, { lessonId });
         }
 
         DOM.elements.lessonLoading.style.display = 'block';
@@ -1212,31 +1374,36 @@ const UI = {
     checkQuiz(lessonId) {
         const lesson = Data.course.lessons.find(l => l.id === lessonId);
         if (!lesson || !lesson.quiz) return;
-
+    
         let correctAnswers = 0;
         const totalQuestions = lesson.quiz.length;
         let allAnswered = true;
-
+    
         lesson.quiz.forEach((q, index) => {
             const selected = document.querySelector(`input[name="question-${index}"]:checked`);
             if (!selected) allAnswered = false;
             if (selected && parseInt(selected.value) === q.correctAnswer) correctAnswers++;
         });
-
+    
         if (!allAnswered) {
             DOM.elements.quizResult.className = 'result-container error';
             DOM.elements.quizResult.textContent = 'Пожалуйста, ответьте на все вопросы!';
             DOM.elements.quizResult.style.display = 'block';
             return;
         }
-
+    
         const score = Math.round((correctAnswers / totalQuestions) * 100);
         State.userProgress[lessonId].quizCompleted = true;
         State.userProgress[lessonId].quizScore = score;
-
+    
+        // Log quiz completion activity
+        Activity.logActivity(Activity.activityTypes.QUIZ_COMPLETED, { lessonId, score });
+    
         if (score >= 70) {
             State.userProgress[lessonId].completed = true;
             State.userStats.points += 50;
+            // Log lesson completion activity
+            Activity.logActivity(Activity.activityTypes.LESSON_COMPLETED, { lessonId });
             DOM.elements.quizResult.className = 'result-container success';
             DOM.elements.quizResult.textContent = `Поздравляем! ${correctAnswers}/${totalQuestions} (${score}%). Урок завершен!`;
             UI.triggerConfetti();
@@ -1248,7 +1415,7 @@ const UI = {
             DOM.elements.quizResult.className = 'result-container error';
             DOM.elements.quizResult.textContent = `${correctAnswers}/${totalQuestions} (${score}%). Нужно 70%+. Попробуйте снова!`;
         }
-
+    
         DOM.elements.quizResult.style.display = 'block';
         DOM.elements.nextBtn.style.display = 'none';
     },
@@ -1256,6 +1423,8 @@ const UI = {
         Data.achievements.forEach(achievement => {
             if (!State.userStats.achievements.includes(achievement.id) && achievement.condition(State.userProgress, State.userStats)) {
                 State.userStats.achievements.push(achievement.id);
+                // Log achievement unlock activity
+                Activity.logActivity(Activity.activityTypes.ACHIEVEMENT_UNLOCKED, { achievementId: achievement.id });
                 UI.showToast(`Достижение: ${achievement.title}!`, achievement.icon);
                 UI.triggerConfetti();
                 saveStats();
@@ -1267,6 +1436,8 @@ const UI = {
             if (!State.userStats.badges.includes(badge.id) && badge.condition(State.userProgress, State.userStats)) {
                 State.userStats.badges.push(badge.id);
                 State.userStats.points += badge.points;
+                // Log badge earned activity
+                Activity.logActivity(Activity.activityTypes.BADGE_EARNED, { badgeId: badge.id });
                 UI.showToast(`Награда: ${badge.title}!`, badge.icon);
                 UI.triggerConfetti();
                 saveStats();
@@ -1308,6 +1479,11 @@ const UI = {
         DOM.elements.profilePage.style.display = page === 'profile' ? 'block' : 'none';
         document.querySelectorAll('.nav-link').forEach(link => link.removeAttribute('aria-current'));
         DOM.elements[`${page}-link`]?.setAttribute('aria-current', 'page');
+    
+        if (page === 'profile') {
+            Activity.renderActivities();
+            UI.updateProfileDisplay();
+        }
     },
     toggleTheme() {
         document.body.classList.toggle('dark-mode');
@@ -1334,28 +1510,6 @@ const UI = {
         } else {
             DOM.elements.hamburger.focus();
         }
-    }
-};
-
-/** Analytics Module */
-const Analytics = {
-    trackEvent(eventName, data) {
-        console.log('Analytics:', { eventName, ...data });
-        fetch('/api/track', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventName, ...data })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-        })
-        .catch(error => {
-            console.error('Analytics error:', error);
-            // Показывать тост только при повторяющихся ошибках, чтобы не спамить пользователя
-            UI.showToast('Ошибка отправки аналитики. Пожалуйста, проверьте соединение.', '❌');
-        });
     }
 };
 
@@ -1425,6 +1579,8 @@ function init() {
                 State.userProfile.name = newName || 'Пользователь';
                 State.userProfile.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}`;
                 saveProfile();
+                // Log profile update activity
+                Activity.logActivity(Activity.activityTypes.PROFILE_UPDATED);
                 UI.showToast('Профиль сохранен!', '✅');
                 Analytics.trackEvent('profile_saved');
             } else {
@@ -1445,13 +1601,18 @@ function init() {
             const text = `Я набрал ${State.userStats.points} очков в обучении кибербезопасности! 🚀`;
             if (navigator.share) {
                 navigator.share({ title: 'Мои достижения', text, url: window.location.href })
+                    .then(() => {
+                        // Log course shared activity
+                        Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+                    })
                     .catch(error => console.error('Share error:', error));
             } else {
                 prompt('Скопируйте текст для публикации:', text);
+                // Log course shared activity
+                Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
             }
             Analytics.trackEvent('achievements_shared');
         });
-
         DOM.elements.lessonPreviewModal.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') DOM.elements.lessonPreviewModal.style.display = 'none';
         });
@@ -1478,7 +1639,6 @@ function init() {
         });
     } catch (error) {
         console.error('Initialization error:', error);
-        UI.showToast('Ошибка загрузки. Попробуйте позже.', '❌');
     }
 }
 
