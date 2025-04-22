@@ -168,6 +168,11 @@ body.high-contrast .progress-circle-fill {
     100% { transform: translate(-2%, 4%) rotate(-1deg); }
 }
 
+.toast {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
 .noise-overlay {
     position: absolute;
     top: 0;
