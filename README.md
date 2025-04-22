@@ -49,3 +49,115 @@
    ```bash
    git clone https://github.com/GregoryBale/g-learn.git
    cd g-learn
+
+
+Set Up a Local Server:
+
+Use a tool like Live Server in VS Code, or run a simple HTTP server with Python:python -m http.server 8000
+
+
+Alternatively, use Node.js with http-server:npm install -g http-server
+http-server .
+
+
+
+
+Open in Browser:Navigate to http://localhost:8000 (or the port provided by your server) to view the application.
+
+
+Project Structure
+g-learn/
+├── assets/                 # Images, icons, and other static assets
+├── source/
+│   ├── css/               # Stylesheets (styles.css)
+│   ├── js/                # JavaScript files (script.js)
+├── favicon.ico            # Favicon
+├── index.html             # Main HTML file
+├── README.md              # Project documentation
+
+
+📖 Usage
+
+Start Learning:
+
+Click the "Начать обучение" button on the home page to preview the first lesson.
+Explore lessons on phishing, passwords, malware, social media, and mobile security.
+
+
+Track Progress:
+
+View your progress, points, and streak on the dashboard.
+Complete quizzes to earn points and unlock achievements.
+
+
+Customize Your Profile:
+
+Update your username and avatar in the profile section.
+Save changes to persist them in localStorage.
+
+
+Earn Achievements:
+
+Unlock badges like "Новичок" or "Чемпион безопасности" by completing lessons and quizzes.
+Share your progress via the "Поделиться достижениями" button.
+
+
+Toggle Themes:
+
+Switch between light and dark modes or enable high-contrast mode for accessibility.
+
+
+
+
+🤝 Contributing
+We welcome contributions to improve G-LEARN! To contribute:
+
+Fork the Repository:Click the "Fork" button at the top of the repository page.
+
+Create a Branch:
+git checkout -b feature/your-feature-name
+
+
+Make Changes:Implement your feature or bug fix, ensuring code quality and accessibility.
+
+Commit Changes:
+git commit -m "Add your feature or fix description"
+
+
+Push to Your Fork:
+git push origin feature/your-feature-name
+
+
+Open a Pull Request:Submit a PR with a clear description of your changes.
+
+
+Please follow the Code of Conduct and ensure your code adheres to the project's style guidelines.
+
+🐛 Reporting Issues
+Found a bug or have a suggestion? Please open an issue on the Issues page. Provide as much detail as possible, including:
+
+Steps to reproduce the issue.
+Expected vs. actual behavior.
+Error messages, if applicable.
+
+
+📜 License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+🙌 Acknowledgments
+
+Phosphor Icons for beautiful icons.
+Canvas Confetti for celebration animations.
+Google Fonts for the Manrope typeface.
+The cybersecurity community for inspiring educational content.
+
+
+📬 Contact
+For questions or feedback, reach out via:
+
+Telegram: @GregoryBale
+Website: gregorybale.site
+GitHub Issues: Create an issue
+
+
+Stay safe online with G-LEARN! 🚀```
