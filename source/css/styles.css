@@ -72,7 +72,7 @@ body {
     flex-direction: column;
     line-height: 1.6;
     transition: background-color var(--transition-medium), color var(--transition-medium);
-    overflow-x: hidden;
+    overflow-x: auto;
 }
 
 body.dark-mode {
@@ -166,11 +166,6 @@ body.high-contrast .progress-circle-fill {
     0% { transform: translate(0, 0) rotate(0deg); }
     50% { transform: translate(3%, 2%) rotate(2deg); }
     100% { transform: translate(-2%, 4%) rotate(-1deg); }
-}
-
-.toast {
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
 }
 
 .noise-overlay {
@@ -372,6 +367,7 @@ header {
     padding: 2rem 1rem;
     flex: 1;
     transition: opacity var(--transition-slow);
+    box-sizing: border-box; /* Убедимся, что padding не увеличивает ширину */
 }
 
 /* Hero Section */
@@ -1145,6 +1141,9 @@ h2 i, h3 i {
     transform: scale(0.8);
     animation: modalPop var(--transition-medium) forwards;
     position: relative;
+    margin: 1rem; /* Добавляем отступы, чтобы не прилипало к краям */
+    max-height: calc(100vh - 2rem); /* Ограничиваем высоту */
+    overflow-y: auto; /* Добавляем прокрутку, если контент не помещается */
 }
 
 .modal-close {
@@ -1208,30 +1207,29 @@ h2 i, h3 i {
 /* Toast Notifications */
 #toast-container {
     position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 1001;
+    top: 1rem;
+    right: 1rem;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
     gap: 0.5rem;
+    z-index: 10000;
+    max-width: calc(100vw - 2rem); /* Ограничиваем ширину контейнера до ширины экрана с отступами */
 }
 
 .toast {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.5rem;
+    padding: 0.75rem;
     background: var(--card-bg);
-    padding: 1rem 1.2rem;
+    color: var(--text-color);
     border-radius: var(--radius-m);
-    box-shadow: 0 4px 15px var(--shadow-strong);
-    margin-bottom: 0.5rem;
-    opacity: 0;
-    transform: translateX(100%);
-    transition: opacity var(--transition-medium), transform var(--transition-medium);
-    border-left: 4px solid var(--primary-color);
-    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px var(--shadow-color);
+    animation: toastPop var(--transition-medium) forwards;
+    width: fit-content;
     max-width: 350px;
+    font-size: 0.9rem;
+    transition: opacity var(--transition-medium), transform var(--transition-medium);
 }
 
 .toast.show {
@@ -1414,7 +1412,7 @@ footer {
         position: fixed;
         top: 0;
         right: 0;
-        width: 280px;
+        width: min(280px, 90vw); /* Ограничиваем ширину до 90% ширины экрана */
         height: 100%;
         flex-direction: column;
         padding: 5rem 2rem 2rem;
@@ -1444,6 +1442,17 @@ footer {
     
     .progress-stats {
         grid-template-columns: 1fr;
+    }
+}
+
+@keyframes toastPop {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -1484,4 +1493,106 @@ footer {
         align-items: center;
         gap: 1rem;
     }
+    .toast {
+        max-width: calc(100vw - 3rem); /* Ограничиваем ширину тоста до ширины экрана минус отступы */
+        font-size: 0.85rem; /* Уменьшаем шрифт для компактности */
+        padding: 0.5rem; /* Уменьшаем внутренние отступы */
+    }
+}
+
+/* Add to styles.css */
+.no-achievements-message, .no-badges-message {
+    text-align: center;
+    padding: 20px;
+    background: #00000000; /* Transparent background */
+    border-radius: 8px;
+    margin: 20px 0;
+}
+.no-achievements-message p, .no-badges-message p {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+.achievement-status, .badge-status {
+    font-size: 0.9em;
+    margin-top: 10px;
+    color: #000000; /* Green status text */
+}
+.achievement-card.locked, .badge-card.locked {
+    opacity: 0.6;
+    filter: grayscale(80%);
+}
+.achievement-icon, .badge-icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.achievement-card.locked .achievement-icon, .badge-card.locked .badge-icon {
+    color: #888; /* Gray color for lock icon */
+}
+.achievement-card.locked .achievement-icon::before, .badge-card.locked .badge-icon::before {
+    content: "\1F512"; /* Unicode for 🔒 */
+    font-family: 'Arial', sans-serif; /* Ensure emoji support */
+}
+
+.activity-statistics {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-text {
+    margin: 0;
+    font-weight: 500;
+}
+
+.activity-time {
+    margin: 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.no-activity {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    max-width: 75%;
+
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    color: #fff;
+
+    animation: fadeIn 0.4s ease-out;
+    transition: all 0.3s ease;
 }
