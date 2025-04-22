@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Интерактивное обучение кибербезопасности с наградами и достижениями">
+    <meta name="keywords" content="кибербезопасность, обучение, интернет-безопасность, фишинг">
+    <meta name="author" content="КиберБезопасность">
+    <meta property="og:title" content="G-LEARN - Интерактивное обучение">
+    <meta property="og:description" content="Изучайте основы кибербезопасности с интерактивными уроками и получайте награды!">
+    <meta property="og:image" content="/assets/og-image.jpg">
+    <meta property="og:url" content="https://g-learn.example.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>G-LEARN - Обучение</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="source/css/styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+    <script src="https://unpkg.com/phosphor-icons"></script>
+</head>
+<body>
+    <a href="#main-container" class="skip-link">Перейти к основному содержимому</a>
+    <div class="background">
+        <div class="gradient-sphere gradient-sphere-1"></div>
+        <div class="gradient-sphere gradient-sphere-2"></div>
+        <div class="gradient-sphere gradient-sphere-3"></div>
+        <div class="noise-overlay"></div>
+    </div>
+    <div class="overlay" id="nav-overlay" aria-hidden="true"></div>
+    <div class="container" id="main-container">
+            <button class="hamburger" id="hamburger" aria-label="Открыть меню" aria-expanded="false" aria-controls="nav-menu" data-menu-toggle>
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <nav class="nav-menu" id="nav-menu" role="navigation" aria-label="Основное меню" aria-hidden="true" data-menu>
+                <a href="index.html" class="logo" aria-label="Главная страница G-LEARN">
+                    <i class="ph ph-shield-check"></i>
+                    <span>G-LEARN</span>
+                </a>
+                <a href="index.html" class="nav-link" id="home-link" aria-current="page">
+                    <i class="ph ph-house"></i>
+                    <span>Главная</span>
+                </a>
+                <a href="achievements.html" class="nav-link" id="achievements-link">
+                    <i class="ph ph-trophy"></i>
+                    <span>Достижения</span>
+                </a>
+                <a href="profile.html" class="nav-link" id="profile-link">
+                    <i class="ph ph-user-circle"></i>
+                    <span>Профиль</span>
+                </a>
+            </nav>
+        </header>
+
+        <main id="home-page" role="main" aria-live="polite">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1>Обучение кибербезопасности</h1>
+                    <p>Изучайте основы безопасного поведения в интернете с интерактивными уроками. Получайте награды и соревнуйтесь!</p>
+                    <div class="hero-buttons">
+                        <a href="#" class="btn primary-btn pulse" id="start-learning-btn">
+                            <i class="ph ph-play"></i>
+                            <span>Начать обучение</span>
+                        </a>
+                        <a href="#" class="btn outline-btn" id="continue-learning-btn">
+                            <i class="ph ph-fast-forward"></i>
+                            <span>Продолжить</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hero-illustration">
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="progress-dashboard">
+                    <h2><i class="ph ph-chart-line-up"></i> Ваш прогресс</h2>
+                    <div class="progress-circle" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="progress-circle-bg" cx="50" cy="50" r="45" />
+                            <circle class="progress-circle-fill" cx="50" cy="50" r="45" id="progress-circle-fill" />
+                        </svg>
+                        <span class="progress-circle-text" id="progress-text">0%</span>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="ph ph-check-circle"></i></div>
+                            <div class="stat-data">
+                                <p class="stat-label">Уроков завершено</p>
+                                <p class="stat-value" id="completed-lessons">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="ph ph-star"></i></div>
+                            <div class="stat-data">
+                                <p class="stat-label">Очки</p>
+                                <p class="stat-value" id="user-points">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon"><i class="ph ph-flame"></i></div>
+                            <div class="stat-data">
+                                <p class="stat-label">Серия</p>
+                                <p class="stat-value" id="user-streak">0 дней</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="daily-goal-container">
+                    <h2><i class="ph ph-target"></i> Ежедневная цель</h2>
+                    <p id="daily-goal-text">Пройдите 1 урок сегодня, чтобы сохранить серию!</p>
+                    <div class="streak-container">
+                        <div class="streak-icon">🔥</div>
+                        <div class="streak-bar">
+                            <div class="streak-progress" style="width: 0%"></div>
+                        </div>
+                        <span id="streak-count">Серия: 0 дней</span>
+                    </div>
+                </div>
+            </div>
+
+            <section class="lessons-section">
+                <h2><i class="ph ph-graduation-cap"></i> Доступные уроки</h2>
+                <div class="lessons-grid" id="lessons-container" role="list"></div>
+                <p>Новые уроки скоро :)</p>
+            </section>
+
+            <section class="leaderboard-section">
+                <h2><i class="ph ph-chart-bar"></i> Таблица лидеров</h2>
+                <div class="leaderboard" id="leaderboard-container" role="list"></div>
+                <p>Нету данных (в разработке)</p>
+            </section>
+        </main>
+
+        <section id="achievements-page" style="display: none;" role="region" aria-label="Достижения" aria-live="polite">
+            <p>*В разработке - могут быть некоторые ошибки.</p>
+            <h2><i class="ph ph-trophy"></i> Ваши достижения</h2>
+            <div class="achievements-grid" id="achievements-container" role="list"></div>
+            <div class="badges-container">
+                <h3><i class="ph ph-medal"></i> Ваши награды</h3>
+                <div class="badges-grid" id="badges-container" role="list"></div>
+            </div>
+            <div class="points-container">
+                <h3><i class="ph ph-star"></i> Ваши очки</h3>
+                <p id="points-text">Очки: 0 🏆</p>
+                <button class="btn primary-btn share-btn" id="share-achievements">
+                    <i class="ph ph-share-network"></i>
+                    <span>Поделиться достижениями</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="profile-page" style="display: none;" role="region" aria-label="Профиль пользователя" aria-live="polite">
+            <h2><i class="ph ph-user-circle"></i> Ваш профиль</h2>
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="avatar-selector">
+                        <div class="avatar-wrapper">
+                            <img id="user-avatar" src="https://ui-avatars.com/api/?name=Пользователь&background=5B7FFF&color=fff" alt="Аватар пользователя" loading="lazy" width="100" height="100">
+                            <button class="avatar-edit-btn" id="change-avatar-btn">
+                                <i class="ph ph-pencil-simple"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-details">
+                        <div class="profile-field">
+                            <label for="user-name-input">Имя:</label>
+                            <input id="user-name-input" value="Пользователь" aria-label="Имя пользователя" maxlength="20">
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-label">Очки:</span>
+                            <span id="user-points-profile" class="profile-value">0</span>
+                        </div>
+                        <div class="profile-field">
+                            <span class="profile-label">Серия:</span>
+                            <span id="user-streak-profile" class="profile-value">0 дней</span>
+                        </div>
+                        <button class="btn primary-btn" id="save-profile-btn">
+                            <i class="ph ph-check"></i>
+                            <span>Сохранить профиль</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="activity-stats">
+                    <h3><i class="ph ph-activity"></i> Ваша активность</h3>
+                    <div class="activity-calendar" id="activity-calendar"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="lesson-page" style="display: none;" role="region" aria-label="Урок" aria-live="polite">
+            <div class="loading-spinner" id="lesson-loading" role="status">
+                <div class="spinner-inner"></div>
+                <span class="visually-hidden">Загрузка урока...</span>
+            </div>
+            <div class="lesson-content" id="lesson-content" style="display: none;"></div>
+            <div class="quiz-container" id="quiz-container" style="display: none;">
+                <h3><i class="ph ph-question"></i> Проверь свои знания</h3>
+                <div id="quiz-questions" role="list"></div>
+                <button class="btn primary-btn quiz-submit" id="submit-quiz">
+                    <i class="ph ph-check-circle"></i>
+                    <span>Проверить ответы</span>
+                </button>
+                <div class="result-container" id="quiz-result" role="alert"></div>
+            </div>
+            <div class="lesson-navigation">
+                <button class="btn outline-btn" id="back-btn">
+                    <i class="ph ph-arrow-left"></i>
+                    <span>Назад к урокам</span>
+                </button>
+                <button class="btn primary-btn" id="next-btn">
+                    <span>Далее: Тест</span>
+                    <i class="ph ph-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <div class="modal" id="lesson-preview-modal" role="dialog" aria-labelledby="preview-title" tabindex="-1">
+            <div class="modal-content">
+                <button class="modal-close" id="close-modal-btn" aria-label="Закрыть">
+                    <i class="ph ph-x"></i>
+                </button>
+                <div class="modal-icon">
+                    <i class="ph ph-book-open"></i>
+                </div>
+                <h3 id="preview-title"></h3>
+                <p id="preview-description"></p>
+                <div class="modal-buttons">
+                    <button class="btn primary-btn" id="start-lesson-btn">
+                        <i class="ph ph-play"></i>
+                        <span>Начать урок</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast-container" role="alert" aria-live="assertive"></div>
+    </div>
+
+    <footer role="contentinfo">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="ph ph-shield-check"></i>
+                <span>КиберБезопасность</span>
+            </div>
+            <p>© 2025 КиберБезопасность. Все права защищены.</p>
+        </div>
+    </footer>
+    <script src="source/js/script.js" defer></script>
+    <script>
+        // Hamburger menu functionality with debug
+        const hamburger = document.querySelector('#hamburger');
+        const navMenu = document.querySelector('#nav-menu');
+        const navOverlay = document.querySelector('#nav-overlay');
+
+        if (!hamburger || !navMenu || !navOverlay) {
+            console.error('Menu elements not found:', { hamburger, navMenu, navOverlay });
+        } else {
+            hamburger.addEventListener('click', () => {
+                console.log('Hamburger clicked');
+                const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
+                hamburger.setAttribute('aria-expanded', !isExpanded);
+                navMenu.setAttribute('aria-hidden', isExpanded);
+                navOverlay.setAttribute('aria-hidden', isExpanded);
+                hamburger.classList.toggle('active');
+                navOverlay.classList.toggle('active');
+                // Force menu visibility for mobile
+                navMenu.style.display = isExpanded ? 'none' : 'block';
+                navOverlay.style.display = isExpanded ? 'none' : 'block';
+            });
+        }
+
+        // Cookies functionality for lessons and achievements
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // Save completed lesson
+        function completeLesson(lessonId) {
+            let lessons = getCookie('completedLessons');
+            lessons = lessons ? JSON.parse(lessons) : [];
+            if (!lessons.includes(lessonId)) {
+                lessons.push(lessonId);
+                setCookie('completedLessons', JSON.stringify(lessons), 365);
+            }
+        }
+
+        // Save achievement
+        function unlockAchievement(achievementId) {
+            let achievements = getCookie('achievements');
+            achievements = achievements ? JSON.parse(achievements) : [];
+            if (!achievements.includes(achievementId)) {
+                achievements.push(achievementId);
+                setCookie('achievements', JSON.stringify(achievements), 365);
+            }
+        }
+    </script>
+</body>
+</html>
