@@ -1412,7 +1412,7 @@ footer {
         position: fixed;
         top: 0;
         right: 0;
-        width: min(280px, 90vw); /* Ограничиваем ширину до 90% ширины экрана */
+        width: min(280px, 90vw);
         height: 100%;
         flex-direction: column;
         padding: 5rem 2rem 2rem;
@@ -1424,6 +1424,9 @@ footer {
     }
     
     .nav-menu[aria-hidden="false"] {
+        transform: translateX(0);
+    }
+    .nav-menu.active {
         transform: translateX(0);
     }
     
@@ -1442,6 +1445,22 @@ footer {
     
     .progress-stats {
         grid-template-columns: 1fr;
+    }
+    .nav-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity var(--transition-medium), visibility var(--transition-medium);
+        z-index: 999;
+    }
+    .nav-overlay.active {
+        opacity: 1;
+        visibility: visible;
     }
 }
 
@@ -1596,3 +1615,185 @@ footer {
     animation: fadeIn 0.4s ease-out;
     transition: all 0.3s ease;
 }
+
+#show-more-available-btn,
+#show-more-completed-btn {
+    margin-top: 20px;
+    display: none; /* Скрыты по умолчанию */
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Контейнер для кнопки "Ещё" */
+.show-more-container {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-m);
+    padding: var(--space-s);
+}
+
+/* Стили для кнопки "Ещё" */
+.btn.outline-btn.show-more-btn {
+    display: inline-block;
+    width: auto;
+    padding: var(--space-s) var(--space-m);
+    font-size: var(--font-size-s);
+    text-align: center;
+    background-color: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    border-radius: var(--radius-m);
+    transition: background-color var(--transition-medium), color var(--transition-medium);
+}
+
+.btn.outline-btn.show-more-btn:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+    cursor: pointer;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .show-more-container {
+        margin-top: var(--space-s);
+    }
+    .btn.outline-btn.show-more-btn {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-s);
+    }
+}
+
+/* Темная тема */
+body.dark-mode .btn.outline-btn.show-more-btn {
+    border-color: var(--dark-primary);
+    color: var(--dark-primary);
+}
+
+body.dark-mode .btn.outline-btn.show-more-btn:hover {
+    background-color: var(--dark-primary);
+    color: var(--dark-white);
+}
+
+/* Высококонтрастный режим */
+body.high-contrast .btn.outline-btn.show-more-btn {
+    border-color: var(--contrast-primary);
+    color: var(--contrast-primary);
+    background-color: var(--contrast-bg-color);
+}
+
+body.high-contrast .btn.outline-btn.show-more-btn:hover {
+    background-color: var(--contrast-primary);
+    color: var(--contrast-bg-color);
+}
+
+.lessons-section {
+    margin-bottom: var(--space-xl);
+}
+
+.lessons-section h2 {
+    font-size: var(--font-size-l);
+    margin-bottom: var(--space-m);
+    color: var(--text-color);
+}
+
+body.dark-mode .lessons-section h2 {
+    color: var(--dark-text);
+}
+
+body.high-contrast .lessons-section h2 {
+    color: var(--contrast-text);
+}
+
+.no-lessons-message {
+    text-align: center;
+    font-size: var(--font-size-m);
+    color: var(--text-muted);
+    padding: var(--space-m);
+}
+
+body.dark-mode .no-lessons-message {
+    color: var(--dark-text-muted);
+}
+
+body.high-contrast .no-lessons-message {
+    color: var(--contrast-text);
+}
+
+/* Стили для контейнера уроков */
+.lessons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Стили для карточек уроков */
+.lesson-card {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.lesson-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Стили для контейнера кнопки "Ещё" */
+.show-more-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1.5rem 0;
+    width: 100%;
+}
+
+/* Стили для кнопки "Ещё" */
+.show-more-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border: 2px solid var(--primary-color, #5b7fff);
+    background: transparent;
+    color: var(--primary-color, #5b7fff);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+.show-more-btn:hover {
+    background: var(--primary-color, #5b7fff);
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.show-more-btn:focus {
+    outline: 3px solid var(--focus-color, #3b5bff);
+    outline-offset: 2px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .lessons-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+
+    .show-more-container {
+        margin: 1rem 0;
+    }
+
+    .show-more-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+.show-more-container { display: flex !important; }
+.show-more-btn { display: block !important; }
+
