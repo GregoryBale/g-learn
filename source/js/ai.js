@@ -15,7 +15,7 @@ const i18n = {
         cancel: 'Отмена',
         save: 'Сохранить',
         darkTheme: 'Темная тема',
-        welcomeMessage: 'Привет! 👋 Я ваш ИИ-помощник. Чем я могу вам помочь сегодня?',
+        welcomeMessage: 'Привет! 👋 Я ваш ИИ-помощник с современным дизайном Windows 11. Чем я могу вам помочь сегодня?',
         clearConfirm: 'Вы уверены, что хотите очистить всю историю чата?',
         emptyHistory: 'История чата пуста.',
         copySuccess: 'Текст скопирован в буфер обмена!',
@@ -880,6 +880,8 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
+// Create chat window with enhanced features
+// Create chat window with enhanced features
 function createChatWindow() {
     const chatWindow = document.createElement('div');
     chatWindow.className = `ai-chat-window ${window.innerWidth <= 768 ? 'mobile' : ''}`;
@@ -1124,10 +1126,10 @@ async function sendMessage() {
     const inputEl = document.getElementById('ai-chat-input');
     const question = inputEl.value.trim();
     if (!question) return;
-
+    
     // Reset textarea height
     inputEl.style.height = 'auto';
-
+    
     // Display user message
     const userMessage = {
         type: 'user',
@@ -1136,18 +1138,22 @@ async function sendMessage() {
     };
     appendMessage(userMessage);
     saveMessage(userMessage);
-
+    
     // Clear input
     inputEl.value = '';
     inputEl.disabled = true;
-
+    
     // Show typing indicator
     showTypingIndicator();
-
+    
     try {
         // Fetch AI response
         const response = await fetch(`${API_URL}${encodeURIComponent(question)}`);
         const data = await response.json();
+        
+        // Remove typing indicator
+        hideTypingIndicator();
+        
         if (data.ok) {
             const aiMessage = {
                 type: 'ai',
@@ -1156,7 +1162,7 @@ async function sendMessage() {
             };
             appendMessage(aiMessage);
             saveMessage(aiMessage);
-
+            
             // Text-to-speech for AI response if enabled
             if (window.speechSynthesis && getChatBehavior() === 'verbose') {
                 speakText(data.message);
@@ -1169,14 +1175,19 @@ async function sendMessage() {
             };
             appendMessage(errorMessage);
         }
-    } catch (error) {        
+    } catch (error) {
+        console.error('Error fetching AI response:', error);
+        hideTypingIndicator();
+        
         const errorMessage = {
             type: 'ai',
-            content: 'Произошла ошибка при обращении к серверу.',
+            content: 'Ошибка соединения. Пожалуйста, проверьте подключение к интернету.',
             timestamp: new Date().toISOString()
         };
         appendMessage(errorMessage);
-        console.error('Ошибка при получении ответа от ИИ:', error);
+    } finally {
+        inputEl.disabled = false;
+        inputEl.focus();
     }
 }
 
@@ -1345,7 +1356,7 @@ function displayWelcomeMessage() {
     if (!history || JSON.parse(decodeURIComponent(history)).length === 0) {
         const welcomeMessage = {
             type: 'ai',
-            content: 'Привет! 👋 Я ваш ИИ-помощник. Чем я могу вам помочь сегодня?',
+            content: 'Привет! 👋 Я ваш ИИ-помощник с современным дизайном Windows 11. Чем я могу вам помочь сегодня?',
             timestamp: new Date().toISOString()
         };
         appendMessage(welcomeMessage);
