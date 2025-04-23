@@ -32,22 +32,6 @@ function getText(key) {
     return i18n[lang][key] || key;
 }
 
-// Utility functions
-function setCookie(name, value, days) {
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = days ? `; expires=${date.toUTCString()}` : '';
-    document.cookie = `${name}=${encodeURIComponent(value || '')}${expires}; path=/; SameSite=Strict`;
-}
-
-function getCookie(name) {
-    const nameEQ = `${name}=`;
-    return document.cookie.split(';')
-        .map(c => c.trim())
-        .find(c => c.startsWith(nameEQ))
-        ?.substring(nameEQ.length) || null;
-}
-
 // Enhanced markdown parser with code block support
 function markdownToHtml(text) {
     // Handle code blocks first
@@ -881,7 +865,6 @@ function injectStyles() {
 }
 
 // Create chat window with enhanced features
-// Create chat window with enhanced features
 function createChatWindow() {
     const chatWindow = document.createElement('div');
     chatWindow.className = `ai-chat-window ${window.innerWidth <= 768 ? 'mobile' : ''}`;
@@ -956,7 +939,7 @@ function createChatWindow() {
             <div class="settings-option">
                 <label for="chat-behavior">Поведение чата</label>
                 <select id="chat-behavior">
-                    <option value="standard" selected>Ст標準ное</option>
+                    <option value="standard" selected>Стандартное</option>
                     <option value="minimalist">Минималистичное</option>
                     <option value="verbose">Подробное</option>
                 </select>
@@ -1350,14 +1333,19 @@ function loadChatHistory() {
     const history = getCookie(COOKIE_NAME);
     if (history) {
         try {
-            const messages = JSON.parse(decodeURIComponent(history));
-            messages.forEach(message => {
-                appendMessage(message);
-            });
+            const messages = JSON.parse(history);
+            if (Array.isArray(messages)) {
+                messages.forEach(message => {
+                    appendMessage(message);
+                });
+            } else {
+                console.warn('Chat history is not an array:', messages);
+                setCookie(COOKIE_NAME, '', -1); // Clear corrupted history
+            }
         } catch (error) {
             console.error('Failed to parse chat history:', error);
-            // Clear corrupted history
-            setCookie(COOKIE_NAME, '', -1);
+            setCookie(COOKIE_NAME, '', -1); // Clear corrupted history
+            showNotification('История чата повреждена и была очищена.', 'error');
         }
     }
 }
@@ -1665,10 +1653,11 @@ function setCookie(name, value, days) {
 function getCookie(name) {
     try {
         const nameEQ = `${name}=`;
-        return document.cookie.split(';')
+        const cookieValue = document.cookie.split(';')
             .map(c => c.trim())
             .find(c => c.startsWith(nameEQ))
             ?.substring(nameEQ.length) || null;
+        return cookieValue ? decodeURIComponent(cookieValue) : null;
     } catch (error) {
         console.error('Failed to get cookie:', error);
         return null;
