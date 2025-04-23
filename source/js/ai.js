@@ -880,8 +880,6 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
-// Create chat window with enhanced features
-// Create chat window with enhanced features
 function createChatWindow() {
     const chatWindow = document.createElement('div');
     chatWindow.className = `ai-chat-window ${window.innerWidth <= 768 ? 'mobile' : ''}`;
@@ -1356,7 +1354,7 @@ function displayWelcomeMessage() {
     if (!history || JSON.parse(decodeURIComponent(history)).length === 0) {
         const welcomeMessage = {
             type: 'ai',
-            content: 'Привет! 👋 Я ваш ИИ-помощник с современным дизайном Windows 11. Чем я могу вам помочь сегодня?',
+            content: 'Привет! 👋 Я ваш ИИ-помощник. Чем я могу вам помочь сегодня?',
             timestamp: new Date().toISOString()
         };
         appendMessage(welcomeMessage);
