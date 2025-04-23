@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="source/css/styles.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
@@ -120,17 +120,20 @@
                 </div>
             </div>
             <section class="lessons-section">
-                <h2><i class="ph ph-graduation-cap"></i> Доступные уроки</h2>
-                <div class="lessons-grid" id="lessons-container" role="list"></div>
-                <p>Новые уроки скоро :)</p>
+                <h2>Доступные уроки</h2>
+                <div class="lessons-grid" id="available-lessons"></div>
+            </section>
+            <section class="lessons-section">
+                <h2>Пройденные уроки</h2>
+                <div class="lessons-grid" id="completed-lessons-list"></div>
             </section>
             <section class="leaderboard-section">
-                <h2><i class="ph ph-chart-bar"></i> Таблица лидеров</h2>
+                <h2>Таблица лидеров</h2>
                 <div class="leaderboard" id="leaderboard-container" role="list"></div>
                 <p>Нету данных (в разработке)</p>
             </section>
         </main>
-        <section id="achievements-page" style="display: none;" role="region" aria-label="Достижения" aria-live="polite">            
+        <section id="achievements-page" style="display: none;" role="region" aria-label="Достижения" aria-live="polite">
             <h2><i class="ph ph-trophy"></i> Ваши достижения</h2>
             <div class="achievements-grid" id="achievements-container" role="list"></div>
             <div id="no-achievements-message" style="display: none;">
@@ -199,7 +202,6 @@
                 <span class="visually-hidden">Загрузка урока...</span>
             </div>
             <div class="lesson-content" id="lesson-content" style="display: none;"></div>
- Now, let's make sure it works correctly with the quiz section:
             <div class="quiz-container" id="quiz-container" style="display: none;">
                 <h3><i class="ph ph-question"></i> Проверь свои знания</h3>
                 <div id="quiz-questions" role="list"></div>
@@ -249,6 +251,7 @@
             <p>© 2025 @gregorybale. Все права защищены.</p>
         </div>
     </footer>
+    <script src="source/js/data.js" defer></script>
     <script src="source/js/script.js" defer></script>
     <script src="source/js/achievements.js" defer></script>
     <script src="source/js/ai.js" defer></script>
@@ -396,6 +399,18 @@
                 }
             }
         })();
+    </script>
+    <script>
+        function toggleMenu() {
+            const isMenuOpen = !DOM.elements.navMenu.classList.contains('active');
+            DOM.elements.navMenu.classList.toggle('active', isMenuOpen);
+            DOM.elements.navOverlay.classList.toggle('active', isMenuOpen);
+        }
+        
+        DOM.elements.navOverlay.addEventListener('click', () => {
+            DOM.elements.navMenu.classList.remove('active');
+            DOM.elements.navOverlay.classList.remove('active');
+        });
     </script>
 </body>
 </html>
