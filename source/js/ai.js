@@ -15,7 +15,7 @@ const i18n = {
         cancel: 'Отмена',
         save: 'Сохранить',
         darkTheme: 'Темная тема',
-        welcomeMessage: 'Привет! 👋 Я ваш ИИ-помощник с современным дизайном Windows 11. Чем я могу вам помочь сегодня?',
+        welcomeMessage: 'ППривет! 👋 Я ваш ИИ-помощник. Чем я могу вам помочь сегодня?',
         clearConfirm: 'Вы уверены, что хотите очистить всю историю чата?',
         emptyHistory: 'История чата пуста.',
         copySuccess: 'Текст скопирован в буфер обмена!',
@@ -1147,8 +1147,19 @@ async function sendMessage() {
     showTypingIndicator();
     
     try {
+        // Check internet connection
+        if (!navigator.onLine) {
+            throw new Error('Нет подключения к интернету. Проверьте ваше соединение и попробуйте снова.');
+        }
+        
         // Fetch AI response
         const response = await fetch(`${API_URL}${encodeURIComponent(question)}`);
+        
+        // Check if response is OK
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         // Remove typing indicator
@@ -1170,7 +1181,7 @@ async function sendMessage() {
         } else {
             const errorMessage = {
                 type: 'ai',
-                content: 'Не удалось получить ответ. Пожалуйста, попробуйте позже.',
+                content: 'Не удалось получить ответ от сервера. Пожалуйста, попробуйте позже.',
                 timestamp: new Date().toISOString()
             };
             appendMessage(errorMessage);
@@ -1181,10 +1192,11 @@ async function sendMessage() {
         
         const errorMessage = {
             type: 'ai',
-            content: 'Ошибка соединения. Пожалуйста, проверьте подключение к интернету.',
+            content: error.message || 'Произошла ошибка при соединении. Проверьте интернет и попробуйте снова.',
             timestamp: new Date().toISOString()
         };
         appendMessage(errorMessage);
+        showNotification(error.message || 'Ошибка соединения.', 'error');
     } finally {
         inputEl.disabled = false;
         inputEl.focus();
@@ -1356,7 +1368,7 @@ function displayWelcomeMessage() {
     if (!history || JSON.parse(decodeURIComponent(history)).length === 0) {
         const welcomeMessage = {
             type: 'ai',
-            content: 'Привет! 👋 Я ваш ИИ-помощник с современным дизайном Windows 11. Чем я могу вам помочь сегодня?',
+            content: 'Привет! 👋 Я ваш ИИ-помощник. Чем я могу вам помочь сегодня?',
             timestamp: new Date().toISOString()
         };
         appendMessage(welcomeMessage);
