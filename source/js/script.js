@@ -265,7 +265,11 @@ const UI = {
         const availableLessonsContainer = document.getElementById('available-lessons');
         const completedLessonsContainer = document.getElementById('completed-lessons-list');
 
-        // Очищаем контейнеры перед рендерингом
+        // Показываем индикатор загрузки
+        this.showLoading(availableLessonsContainer);
+        this.showLoading(completedLessonsContainer);
+
+        // Очищаем контейнеры
         availableLessonsContainer.innerHTML = '';
         completedLessonsContainer.innerHTML = '';
 
@@ -281,7 +285,7 @@ const UI = {
         function renderLesson(lesson, container) {
             const progress = State.userProgress[lesson.id] || { status: 'not-started' };
             const lessonCard = document.createElement('div');
-            lessonCard.className = 'lesson-card';
+            lessonCard.className = 'lesson-card fade-in';
             lessonCard.setAttribute('role', 'listitem');
 
             const status = progress.completed ? { class: 'completed', text: 'Завершен' }
@@ -302,18 +306,22 @@ const UI = {
         // Функция для создания кнопки "Ещё..."
         function createShowMoreButton(id, label, lessons, container, initialCount) {
             const button = document.createElement('button');
-            button.className = 'btn outline-btn show-more-btn';
+            button.className = 'btn outline-btn show-more-btn pulse';
             button.id = id;
             button.textContent = `Ещё (${lessons.length - initialCount})`;
             button.setAttribute('aria-label', label);
             button.setAttribute('type', 'button');
             button.setAttribute('role', 'button');
             button.onclick = () => {
-                // Рендерим только оставшиеся уроки
+                // Рендерим оставшиеся уроки
                 lessons.slice(initialCount).forEach(lesson => renderLesson(lesson, container));
                 // Удаляем кнопку
                 const buttonContainer = container.querySelector('.show-more-container');
                 if (buttonContainer) buttonContainer.remove();
+                // Показываем уведомление, если больше нет уроков
+                if (lessons.length >= Data.course.totalLessons) {
+                    UI.showNotification('Уроков больше нет, новые появятся скоро!');
+                }
                 Analytics.trackEvent('show_more_clicked', { buttonId: id, remaining: lessons.length - initialCount });
             };
             return button;
@@ -336,7 +344,7 @@ const UI = {
                     initialAvailableCount
                 );
                 const availableButtonContainer = document.createElement('div');
-                availableButtonContainer.className = 'show-more-container';
+                availableButtonContainer.className = 'show-more-container fade-in';
                 availableButtonContainer.appendChild(availableShowMoreBtn);
                 availableLessonsContainer.appendChild(availableButtonContainer);
             }
@@ -359,11 +367,15 @@ const UI = {
                     initialCompletedCount
                 );
                 const completedButtonContainer = document.createElement('div');
-                completedButtonContainer.className = 'show-more-container';
+                completedButtonContainer.className = 'show-more-container fade-in';
                 completedButtonContainer.appendChild(completedShowMoreBtn);
                 completedLessonsContainer.appendChild(completedButtonContainer);
             }
         }
+
+        // Убираем индикатор загрузки
+        this.hideLoading(availableLessonsContainer);
+        this.hideLoading(completedLessonsContainer);
     },
     renderAchievements() {
         DOM.elements.achievementsContainer.innerHTML = '';
@@ -650,6 +662,46 @@ const UI = {
         } else {
             DOM.elements.hamburger.focus();
         }
+    },
+    showNotification(message) {
+        const modal = document.getElementById('notification-modal');
+        const modalMessage = document.getElementById('notification-message');
+        modalMessage.textContent = message;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        const closeBtn = document.getElementById('notification-close-btn');
+        closeBtn.focus(); // Фокус для доступности
+        Analytics.trackEvent('notification_shown', { message });
+    },
+
+    hideNotification() {
+        const modal = document.getElementById('notification-modal');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    },
+
+    showLoading(container) {
+        const loader = document.createElement('div');
+        loader.className = 'loader';
+        loader.setAttribute('aria-label', 'Загрузка уроков');
+        container.appendChild(loader);
+    },
+
+    hideLoading(container) {
+        const loader = container.querySelector('.loader');
+        if (loader) loader.remove();
+    },
+
+    continueLearning() {
+        const availableLessons = Data.course.lessons.filter(lesson => !State.userProgress[lesson.id]?.completed);
+        if (availableLessons.length === 0) {
+            this.showNotification('Уроков больше нет, новые появятся скоро!');
+        } else {
+            // Открываем первый доступный урок
+            const firstAvailableLesson = availableLessons[0];
+            this.showLessonPreview(firstAvailableLesson.id);
+            Analytics.trackEvent('continue_learning_clicked', { lessonId: firstAvailableLesson.id });
+        }
     }
 };
 
@@ -657,6 +709,21 @@ const UI = {
 DOM.elements.navOverlay.addEventListener('click', () => {
     if (State.isMenuOpen) {
         UI.toggleMenu(); // Вызываем метод toggleMenu в контексте объекта UI
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('notification-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => UI.hideNotification());
+    }
+
+    const continueBtn = document.getElementById('continue-learning-btn');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Предотвращаем действие ссылки
+            UI.continueLearning();
+        });
     }
 });
 
