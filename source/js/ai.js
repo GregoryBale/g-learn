@@ -1124,10 +1124,10 @@ async function sendMessage() {
     const inputEl = document.getElementById('ai-chat-input');
     const question = inputEl.value.trim();
     if (!question) return;
-    
+
     // Reset textarea height
     inputEl.style.height = 'auto';
-    
+
     // Display user message
     const userMessage = {
         type: 'user',
@@ -1136,22 +1136,18 @@ async function sendMessage() {
     };
     appendMessage(userMessage);
     saveMessage(userMessage);
-    
+
     // Clear input
     inputEl.value = '';
     inputEl.disabled = true;
-    
+
     // Show typing indicator
     showTypingIndicator();
-    
+
     try {
         // Fetch AI response
         const response = await fetch(`${API_URL}${encodeURIComponent(question)}`);
         const data = await response.json();
-        
-        // Remove typing indicator
-        hideTypingIndicator();
-        
         if (data.ok) {
             const aiMessage = {
                 type: 'ai',
@@ -1160,7 +1156,7 @@ async function sendMessage() {
             };
             appendMessage(aiMessage);
             saveMessage(aiMessage);
-            
+
             // Text-to-speech for AI response if enabled
             if (window.speechSynthesis && getChatBehavior() === 'verbose') {
                 speakText(data.message);
@@ -1173,19 +1169,14 @@ async function sendMessage() {
             };
             appendMessage(errorMessage);
         }
-    } catch (error) {
-        console.error('Error fetching AI response:', error);
-        hideTypingIndicator();
-        
+    } catch (error) {        
         const errorMessage = {
             type: 'ai',
-            content: 'Ошибка соединения. Пожалуйста, проверьте подключение к интернету.',
+            content: 'Произошла ошибка при обращении к серверу.',
             timestamp: new Date().toISOString()
         };
         appendMessage(errorMessage);
-    } finally {
-        inputEl.disabled = false;
-        inputEl.focus();
+        console.error('Ошибка при получении ответа от ИИ:', error);
     }
 }
 
