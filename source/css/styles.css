@@ -1797,3 +1797,84 @@ body.high-contrast .no-lessons-message {
 .show-more-container { display: flex !important; }
 .show-more-btn { display: block !important; }
 
+.notification-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.notification-content {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.notification-modal[aria-hidden="false"] .notification-content {
+    transform: scale(1);
+}
+
+.notification-content p {
+    margin: 0 0 1.5rem;
+    font-size: 1.1rem;
+}
+
+.notification-content button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    background: var(--primary-color, #5b7fff);
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.notification-content button:hover {
+    background: var(--focus-color, #3b5bff);
+}
+
+.notification-content button:focus {
+    outline: 3px solid var(--focus-color, #3b5bff);
+    outline-offset: 2px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .lessons-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0.5rem;
+    }
+
+    .show-more-container {
+        margin: 1.5rem 0;
+    }
+
+    .btn.outline-btn {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    #continue-learning-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .notification-content {
+        padding: 1.5rem;
+        max-width: 300px;
+    }
+}
