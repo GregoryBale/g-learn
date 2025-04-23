@@ -16,6 +16,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="source/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.0.3/src/bold/style.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
@@ -133,6 +135,12 @@
                 <p>Нету данных (в разработке)</p>
             </section>
         </main>
+        <div id="notification-modal" class="notification-modal" aria-hidden="true">
+            <div class="notification-content">
+                <p id="notification-message"></p>
+                <button id="notification-close-btn" aria-label="Закрыть уведомление">ОК</button>
+            </div>
+        </div>
         <section id="achievements-page" style="display: none;" role="region" aria-label="Достижения" aria-live="polite">
             <h2><i class="ph ph-trophy"></i> Ваши достижения</h2>
             <div class="achievements-grid" id="achievements-container" role="list"></div>
