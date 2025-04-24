@@ -558,21 +558,16 @@ header {
 .leaderboard-item,
 .profile-card,
 .activity-stats {
-    background: var(--card-bg);
-    border-radius: var(--radius-l);
-    padding: 2rem;
-    box-shadow: 0 8px 25px var(--shadow-color);
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(10px);
-    animation: fadeIn var(--transition-medium);
-    transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+    background: var(--card-bg, rgb(120, 120, 120));
+    border-radius: var(--radius-l, 12px);
+    padding: 1.5rem;
+    backdrop-filter: blur(20px);
+    animation: fadeIn 0.3s ease-out;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.progress-dashboard:hover,
-.daily-goal-container:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px var(--shadow-strong);
-}
 
 h2 {
     font-size: 1.5rem;
@@ -1876,5 +1871,67 @@ body.high-contrast .no-lessons-message {
     .notification-content {
         padding: 1.5rem;
         max-width: 300px;
+    }
+}
+
+/* Notification modal */
+#progress-moved-notification {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+#progress-moved-notification .modal-content {
+    background: var(--card-bg, rgba(255, 255, 255, 0.95));
+    border-radius: var(--radius-l, 12px);
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-out;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    margin: 0 auto;
+}
+
+#progress-moved-notification h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary, #212529);
+}
+
+#progress-moved-notification p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary, #495057);
+}
+
+#progress-moved-notification .primary-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+    #progress-moved-notification .modal-content {
+        padding: 1rem;
+        max-width: 300px;
+    }
+
+    #progress-moved-notification h3 {
+        font-size: 1.1rem;
+    }
+
+    #progress-moved-notification p {
+        font-size: 0.9rem;
     }
 }
