@@ -19,15 +19,16 @@ const Activity = {
     // Load activities from localStorage
     loadActivities() {
         try {
-            const saved = localStorage.getItem('userActivities');
+            const storage = storageAvailable ? localStorage : MemoryStorage;
+            const saved = storage.getItem('userActivities');
             if (!saved) {
-                console.log('No activities found in localStorage');
+                console.log('No activities found in storage');
                 return [];
             }
             const activities = JSON.parse(saved);
             if (!Array.isArray(activities)) {
                 console.warn('Invalid activities format, resetting to empty array');
-                localStorage.setItem('userActivities', JSON.stringify([]));
+                storage.setItem('userActivities', JSON.stringify([]));
                 return [];
             }
             console.log('Loaded activities:', activities);
@@ -35,52 +36,53 @@ const Activity = {
         } catch (error) {
             console.error('Error loading activities:', error);
             UI.showToast('Ошибка загрузки активности. Данные сброшены.', '❌');
-            localStorage.setItem('userActivities', JSON.stringify([]));
+            const storage = storageAvailable ? localStorage : MemoryStorage;
+            storage.setItem('userActivities', JSON.stringify([]));
             return [];
         }
     },
-
     // Save activities to localStorage
     saveActivities(activities) {
         try {
             if (!Array.isArray(activities)) {
                 throw new Error('Activities must be an array');
             }
-            localStorage.setItem('userActivities', JSON.stringify(activities));
+            const storage = storageAvailable ? localStorage : MemoryStorage;
+            storage.setItem('userActivities', JSON.stringify(activities));
             console.log('Saved activities:', activities);
         } catch (error) {
             console.error('Error saving activities:', error);
             UI.showToast('Не удалось сохранить активность.', '❌');
         }
     },
-
     // Log a new activity
-    logActivity(type, details = {}) {
-        if (!this.activityTypes[type]) {
-            console.warn('Unknown activity type:', type);
-            return;
-        }
-    
-        console.log('Logging activity:', { type, details });
-        const activities = this.loadActivities();
-        const activity = {
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            type,
-            timestamp: new Date().toISOString(),
-            details
-        };
-    
-        activities.unshift(activity);
-        if (activities.length > 100) {
-            activities.pop();
-        }
-    
-        this.saveActivities(activities);
-        if (DOM.elements.profilePage && DOM.elements.profilePage.style.display === 'block') {
-            this.renderActivities();
-        }
-        Analytics.trackEvent('activity_logged', { type, details });
-    },
+logActivity(type, details = {}) {
+    if (!this.activityTypes[type]) {
+        console.warn('Unknown activity type:', type);
+        return;
+    }
+
+    console.log('Logging activity:', { type, details });
+    const activities = this.loadActivities();
+    const activity = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type,
+        timestamp: new Date().toISOString(),
+        details: { ...details } // Гарантируем, что details всегда объект
+    };
+
+    activities.unshift(activity);
+    if (activities.length > 100) {
+        activities.pop();
+    }
+
+    this.saveActivities(activities);
+    if (DOM.elements.profilePage && DOM.elements.profilePage.style.display === 'block') {
+        console.log('Profile page is visible, rendering activities');
+        this.renderActivities();
+    }
+    Analytics.trackEvent('activity_logged', { type, details });
+},
 
     // Render activities to the DOM
     renderActivities() {
@@ -101,82 +103,93 @@ const Activity = {
         }
     
         activities.forEach(activity => {
-            const activityElement = document.createElement('div');
-            activityElement.className = 'activity-item';
-            activityElement.setAttribute('role', 'listitem');
-        
-            const lesson = activity.details.lessonId
-                ? Data.course.lessons.find(l => l.id === activity.details.lessonId)
-                : null;
-            const achievement = activity.details.achievementId
-                ? Data.achievements.find(a => a.id === activity.details.achievementId)
-                : null;
-            const badge = activity.details.badgeId
-                ? Data.badges.find(b => b.id === activity.details.badgeId)
-                : null;
-        
-            if (!lesson && activity.details.lessonId) {
-                console.warn(`Lesson not found for lessonId: ${activity.details.lessonId}`);
-            }
-            if (!achievement && activity.details.achievementId) {
-                console.warn(`Achievement not found for achievementId: ${activity.details.achievementId}`);
-            }
-            if (!badge && activity.details.badgeId) {
-                console.warn(`Badge not found for badgeId: ${activity.details.badgeId}`);
-            }
+            try {
+                const activityElement = document.createElement('div');
+                activityElement.className = 'activity-item';
+                activityElement.setAttribute('role', 'listitem');
     
-            let icon = '';
-            let text = '';
-            const date = new Date(activity.timestamp);
-            const formattedTime = date.toLocaleString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+                // Проверяем, существует ли details, и устанавливаем значения по умолчанию
+                const details = activity.details || {};
+                const lessonId = details.lessonId || null;
+                const achievementId = details.achievementId || null;
+                const badgeId = details.badgeId || null;
     
-            switch (activity.type) {
-                case this.activityTypes.LESSON_STARTED:
-                    icon = '📖';
-                    text = `Начали урок: ${lesson ? lesson.title : 'Неизвестный урок'}`;
-                    break;
-                case this.activityTypes.LESSON_COMPLETED:
-                    icon = '✅';
-                    text = `Завершили урок: ${lesson ? lesson.title : 'Неизвестный урок'}`;
-                    break;
-                case this.activityTypes.QUIZ_COMPLETED:
-                    icon = '📝';
-                    text = `Пройден тест: ${lesson ? lesson.title : 'Неизвестный урок'} (${activity.details.score || 0}%)`;
-                    break;
-                case this.activityTypes.ACHIEVEMENT_UNLOCKED:
-                    icon = achievement?.icon || '🏆';
-                    text = `Получено достижение: ${achievement ? achievement.title : 'Неизвестное достижение'}`;
-                    break;
-                case this.activityTypes.BADGE_EARNED:
-                    icon = badge?.icon || '🏅';
-                    text = `Заработана награда: ${badge ? badge.title : 'Неизвестная награда'}`;
-                    break;
-                case this.activityTypes.PROFILE_UPDATED:
-                    icon = '🧑';
-                    text = 'Обновлен профиль';
-                    break;
-                case this.activityTypes.COURSE_SHARED:
-                    icon = '🤝';
-                    text = 'Поделились курсом';
-                    break;
-                default:
-                    icon = '❓';
-                    text = 'Неизвестная активность';
+                const lesson = lessonId
+                    ? Data.course.lessons.find(l => l.id === lessonId)
+                    : null;
+                const achievement = achievementId
+                    ? Data.achievements.find(a => a.id === achievementId)
+                    : null;
+                const badge = badgeId
+                    ? Data.badges.find(b => b.id === badgeId)
+                    : null;
+    
+                if (!lesson && lessonId) {
+                    console.warn(`Lesson not found for lessonId: ${lessonId}`);
+                }
+                if (!achievement && achievementId) {
+                    console.warn(`Achievement not found for achievementId: ${achievementId}`);
+                }
+                if (!badge && badgeId) {
+                    console.warn(`Badge not found for badgeId: ${badgeId}`);
+                }
+    
+                let icon = '';
+                let text = '';
+                const date = new Date(activity.timestamp);
+                const formattedTime = date.toLocaleString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+    
+                switch (activity.type) {
+                    case this.activityTypes.LESSON_STARTED:
+                        icon = '📖';
+                        text = `Начали урок: ${lesson ? lesson.title : 'Неизвестный урок'}`;
+                        break;
+                    case this.activityTypes.LESSON_COMPLETED:
+                        icon = '✅';
+                        text = `Завершили урок: ${lesson ? lesson.title : 'Неизвестный урок'}`;
+                        break;
+                    case this.activityTypes.QUIZ_COMPLETED:
+                        icon = '📝';
+                        text = `Пройден тест: ${lesson ? lesson.title : 'Неизвестный урок'} (${details.score || 0}%)`;
+                        break;
+                    case this.activityTypes.ACHIEVEMENT_UNLOCKED:
+                        icon = achievement?.icon || '🏆';
+                        text = `Получено достижение: ${achievement ? achievement.title : 'Неизвестное достижение'}`;
+                        break;
+                    case this.activityTypes.BADGE_EARNED:
+                        icon = badge?.icon || '🏅';
+                        text = `Заработана награда: ${badge ? badge.title : 'Неизвестная награда'}`;
+                        break;
+                    case this.activityTypes.PROFILE_UPDATED:
+                        icon = '🧑';
+                        text = 'Обновлен профиль';
+                        break;
+                    case this.activityTypes.COURSE_SHARED:
+                        icon = '🤝';
+                        text = 'Поделились курсом';
+                        break;
+                    default:
+                        icon = '❓';
+                        text = 'Неизвестная активность';
+                }
+    
+                activityElement.innerHTML = `
+                    <div class="activity-icon">${icon}</div>
+                    <div class="activity-details">
+                        <p class="activity-text">${text}</p>
+                        <p class="activity-time">${formattedTime}</p>
+                    </div>
+                `;
+                container.appendChild(activityElement);
+            } catch (error) {
+                console.error('Error rendering activity:', activity, error);
+                UI.showToast('Ошибка отображения активности.', '❌');
             }
-    
-            activityElement.innerHTML = `
-                <div class="activity-icon">${icon}</div>
-                <div class="activity-details">
-                    <p class="activity-text">${text}</p>
-                    <p class="activity-time">${formattedTime}</p>
-                </div>
-            `;
-            container.appendChild(activityElement);
         });
     }
 };
