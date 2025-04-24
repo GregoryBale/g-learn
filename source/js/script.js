@@ -58,7 +58,11 @@ const DOM = {
         startLessonBtn: document.getElementById('start-lesson-btn'),
         closeModalBtn: document.getElementById('close-modal-btn'),
         toastContainer: document.getElementById('toast-container'),
-        lessonLoading: document.getElementById('lesson-loading')
+        lessonLoading: document.getElementById('lesson-loading'),
+        mobileNav: document.getElementById('mobile-nav'),
+        mobileHomeLink: document.getElementById('mobile-home-link'),
+        mobileAchievementsLink: document.getElementById('mobile-achievements-link'),
+        mobileProfileLink: document.getElementById('mobile-profile-link')
     }
 };
 
@@ -629,8 +633,9 @@ const UI = {
         DOM.elements.lessonPage.style.display = page === 'lesson' ? 'block' : 'none';
         DOM.elements.achievementsPage.style.display = page === 'achievements' ? 'block' : 'none';
         DOM.elements.profilePage.style.display = page === 'profile' ? 'block' : 'none';
-        document.querySelectorAll('.nav-link').forEach(link => link.removeAttribute('aria-current'));
+        document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
         DOM.elements[`${page}-link`]?.setAttribute('aria-current', 'page');
+        DOM.elements[`mobile-${page}-link`]?.setAttribute('aria-current', 'page');
     
         if (page === 'profile') {
             Activity.renderActivities();
@@ -767,6 +772,21 @@ function init() {
             e.preventDefault();
             UI.showPage('profile');
             Analytics.trackEvent('nav_profile_clicked');
+        });
+        DOM.elements.mobileHomeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('mobile_nav_home_clicked');
+        });
+        DOM.elements.mobileAchievementsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('mobile_nav_achievements_clicked');
+        });
+        DOM.elements.mobileProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('mobile_nav_profile_clicked');
         });
         DOM.elements.changeAvatarBtn.addEventListener('click', () => {
             const newAvatar = prompt('Введите URL аватара:', State.userProfile.avatar);
