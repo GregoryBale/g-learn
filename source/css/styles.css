@@ -1968,3 +1968,96 @@ body.high-contrast .no-lessons-message {
         padding: 0.6rem 1.25rem;
     }
 }
+
+/* Стили для нового мобильного навигационного меню */
+.mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 5px var(--shadow-color);
+    z-index: 10000; /* Высокий z-index, чтобы быть поверх всех элементов */
+    padding: var(--space-s) 0;
+    animation: slideUpNav 0.3s ease-out forwards;
+}
+
+.mobile-nav-links {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+}
+
+.mobile-nav-link {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-m);
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    position: relative;
+    max-width: 80px;
+}
+
+.mobile-nav-link i {
+    font-size: 1.8rem;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link:focus,
+.mobile-nav-link[aria-current="page"] {
+    color: var(--primary-color);
+    background: rgba(58, 134, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.mobile-nav-link[aria-current="page"]::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--primary-color);
+    border-radius: 50%;
+}
+
+body.dark-mode .mobile-nav-link {
+    color: var(--dark-text-color);
+}
+
+body.dark-mode .mobile-nav-link:hover,
+body.dark-mode .mobile-nav-link:focus,
+body.dark-mode .mobile-nav-link[aria-current="page"] {
+    color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .mobile-nav {
+        display: flex;
+    }
+
+    /* Скрываем старое мобильное меню и гамбургер-меню */
+    .hamburger,
+    .nav-menu {
+        display: none;
+    }
+
+    /* Увеличиваем отступ снизу для контента, чтобы не перекрывать новое меню */
+    .container {
+        padding-bottom: 5rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-nav {
+        animation: none;
+    }
+}
