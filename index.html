@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Интерактивное обучение кибербезопасности с наградами и достижениями">
     <meta name="keywords" content="кибербезопасность, обучение, интернет-безопасность, фишинг">
-    <meta name="author" content="КиберБезопасность">
+    <meta name="author" content="gregorybale.site">
     <meta property="og:title" content="G-LEARN - Интерактивное обучение">
     <meta property="og:description" content="Изучайте основы кибербезопасности с интерактивными уроками и получайте награды!">
     <meta property="og:image" content="/assets/og-image.jpg">
@@ -16,29 +16,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="source/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.0.3/src/bold/style.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
     <script src="https://unpkg.com/phosphor-icons"></script>
-    <!-- Yandex.Metrika counter -->
-<script type="text/javascript" >
-   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-   m[i].l=1*new Date();
-   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-   ym(101353407, "init", {
-        clickmap:true,
-        trackLinks:true,
-        accurateTrackBounce:true,
-        webvisor:true
-   });
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/101353407" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
 </head>
 <body>
     <a href="#main-container" class="skip-link">Перейти к основному содержимому</a>
@@ -89,8 +71,7 @@
                         </a>
                     </div>
                 </div>
-                <div class="hero-illustration">
-                </div>
+                <div class="hero-illustration"></div>
             </div>
             <section class="lessons-section">
                 <h2>Доступные уроки</h2>
@@ -273,6 +254,20 @@
             </div>
         </div>
         <div id="toast-container" role="alert" aria-live="assertive"></div>
+        <!-- Новое мобильное навигационное меню -->
+        <nav class="mobile-nav" id="mobile-nav" role="navigation" aria-label="Мобильное меню">
+            <div class="mobile-nav-links">
+                <a href="#" class="mobile-nav-link" id="mobile-home-link" aria-label="Главная">
+                    <i class="ph ph-house"></i>
+                </a>
+                <a href="#" class="mobile-nav-link" id="mobile-achievements-link" aria-label="Достижения">
+                    <i class="ph ph-trophy"></i>
+                </a>
+                <a href="#" class="mobile-nav-link" id="mobile-profile-link" aria-label="Профиль">
+                    <i class="ph ph-user-circle"></i>
+                </a>
+            </div>
+        </nav>
     </div>
     <footer role="contentinfo">
         <div class="footer-content">
@@ -289,27 +284,59 @@
     <script src="source/js/ai.js" defer></script>
     <script src="source/js/activity.js" defer></script>
     <script src="source/js/notification.js" defer></script>
-    <script>
-        // Hamburger menu functionality with debug
-        const hamburger = document.querySelector('#hamburger');
-        const navMenu = document.querySelector('#nav-menu');
-        const navOverlay = document.querySelector('#nav-overlay');
+        <!-- Yandex.Metrika counter -->
+    <script type="text/javascript" >
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
 
-        if (!hamburger || !navMenu || !navOverlay) {
-            console.error('Menu elements not found:', { hamburger, navMenu, navOverlay });
-        } else {
-            hamburger.addEventListener('click', () => {
-                console.log('Hamburger clicked');
-                const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
-                hamburger.setAttribute('aria-expanded', !isExpanded);
-                navMenu.setAttribute('aria-hidden', isExpanded);
-                navOverlay.setAttribute('aria-hidden', isExpanded);
-                hamburger.classList.toggle('active');
-                navOverlay.classList.toggle('active');
-                navMenu.style.display = isExpanded ? 'none' : 'block';
-                navOverlay.style.display = isExpanded ? 'none' : 'block';
-            });
-        }
+   ym(101353407, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/101353407" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+    <script>
+        // Удаляем старую функциональность гамбургер-меню, так как она больше не нужна
+        // Новая навигация управляется через мобильное меню
+        const mobileHomeLink = document.querySelector('#mobile-home-link');
+        const mobileAchievementsLink = document.querySelector('#mobile-achievements-link');
+        const mobileProfileLink = document.querySelector('#mobile-profile-link');
+
+        mobileHomeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
+            mobileHomeLink.setAttribute('aria-current', 'page');
+            document.getElementById('home-page').style.display = 'block';
+            document.getElementById('achievements-page').style.display = 'none';
+            document.getElementById('profile-page').style.display = 'none';
+            document.getElementById('lesson-page').style.display = 'none';
+        });
+
+        mobileAchievementsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
+            mobileAchievementsLink.setAttribute('aria-current', 'page');
+            document.getElementById('home-page').style.display = 'none';
+            document.getElementById('achievements-page').style.display = 'block';
+            document.getElementById('profile-page').style.display = 'none';
+            document.getElementById('lesson-page').style.display = 'none';
+        });
+
+        mobileProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
+            mobileProfileLink.setAttribute('aria-current', 'page');
+            document.getElementById('home-page').style.display = 'none';
+            document.getElementById('achievements-page').style.display = 'none';
+            document.getElementById('profile-page').style.display = 'block';
+            document.getElementById('lesson-page').style.display = 'none';
+        });
 
         // Cookies functionality for lessons and achievements
         function setCookie(name, value, days) {
@@ -352,98 +379,6 @@
                 setCookie('achievements', JSON.stringify(achievements), 365);
             }
         }
-    </script>
-    <script>
-        (function () {
-            function injectChallengeScript() {
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                if (doc) {
-                    var challengeScript = doc.createElement('script');
-                    challengeScript.innerHTML = `
-                        window.__CF$cv$params = {
-                            r: '93487504cec8da8b',
-                            t: 'MTc0NTM1OTg4OC4wMDAwMDA='
-                        };
-                        var script = document.createElement('script');
-                        script.nonce = '';
-                        script.src = '/cdn-cgi/challenge-platform/scripts/jsd/main.js';
-                        document.getElementsByTagName('head')[0].appendChild(script);
-                    `;
-                    doc.getElementsByTagName('head')[0].appendChild(challengeScript);
-                }
-            }
-        
-            if (document.body) {
-                var iframe = document.createElement('iframe');
-                iframe.height = 1;
-                iframe.width = 1;
-                iframe.style.position = 'absolute';
-                iframe.style.top = 0;
-                iframe.style.left = 0;
-                iframe.style.border = 'none';
-                iframe.style.visibility = 'hidden';
-                document.body.appendChild(iframe);
-        
-                if (document.readyState !== 'loading') {
-                    injectChallengeScript();
-                } else if (window.addEventListener) {
-                    document.addEventListener('DOMContentLoaded', injectChallengeScript);
-                } else {
-                    var originalReadyStateChange = document.onreadystatechange || function () {};
-                    document.onreadystatechange = function (e) {
-                        originalReadyStateChange(e);
-                        if (document.readyState !== 'loading') {
-                            document.onreadystatechange = originalReadyStateChange;
-                            injectChallengeScript();
-                        }
-                    };
-                }
-            }
-        })();
-    </script>    
-    <script>
-        (function(){
-            function c(){
-                var b=a.contentDocument||a.contentWindow.document;
-                if(b){
-                    var d=b.createElement('script');
-                    d.innerHTML="window.__CF$cv$params={r:'93489b193888adc5',t:'MTc0NTM2MTQ0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
-                    b.getElementsByTagName('head')[0].appendChild(d)
-                }
-            }
-            if(document.body){
-                var a=document.createElement('iframe');
-                a.height=1;
-                a.width=1;
-                a.style.position='absolute';
-                a.style.top=0;
-                a.style.left=0;
-                a.style.border='none';
-                a.style.visibility='hidden';
-                document.body.appendChild(a);
-                if('loading'!==document.readyState)c();
-                else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);
-                else{
-                    var e=document.onreadystatechange||function(){};
-                    document.onreadystatechange=function(b){
-                        e(b);
-                        'loading'!==document.readyState&&(document.onreadystatechange=e,c())
-                    }
-                }
-            }
-        })();
-    </script>
-    <script>
-        function toggleMenu() {
-            const isMenuOpen = !DOM.elements.navMenu.classList.contains('active');
-            DOM.elements.navMenu.classList.toggle('active', isMenuOpen);
-            DOM.elements.navOverlay.classList.toggle('active', isMenuOpen);
-        }
-        
-        DOM.elements.navOverlay.addEventListener('click', () => {
-            DOM.elements.navMenu.classList.remove('active');
-            DOM.elements.navOverlay.classList.remove('active');
-        });
     </script>
 </body>
 </html>
