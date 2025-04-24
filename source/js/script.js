@@ -8,6 +8,61 @@ const Analytics = {
     }
 };
 
+/** In-Memory Storage as a Fallback */
+const MemoryStorage = {
+    data: {},
+    getItem(key) {
+        return this.data[key] || null;
+    },
+    setItem(key, value) {
+        this.data[key] = value;
+    },
+    removeItem(key) {
+        delete this.data[key];
+    }
+};
+
+// Проверка приватного режима
+function isPrivateMode() {
+    try {
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+        return false;
+    } catch (e) {
+        return true;
+    }
+}
+
+if (isPrivateMode()) {
+    UI.showToast('Вы в приватном режиме. Прогресс не сохраняется между сессиями.', '⚠️');
+}
+
+// Проверка на блокировку JavaScript
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        const testScript = document.createElement('script');
+        testScript.textContent = 'window.jsEnabled = true;';
+        document.head.appendChild(testScript);
+
+        setTimeout(() => {
+            if (!window.jsEnabled) {
+                UI.showToast('JavaScript заблокирован. Некоторые функции недоступны. Проверьте настройки браузера.', '⚠️');
+            }
+        }, 1000);
+    });
+}
+
+/** Проверка доступности localStorage */
+let storageAvailable = true;
+try {
+    localStorage.setItem('test', 'test');
+    localStorage.removeItem('test');
+} catch (e) {
+    storageAvailable = false;
+    console.warn('localStorage is not available. Using in-memory storage as fallback.');
+    UI.showToast('Сохранение данных ограничено. Прогресс сохраняется только в текущей сессии.', '⚠️');
+}
+
 /** DOM Module */
 const DOM = {
     elements: {
@@ -164,7 +219,8 @@ const Progress = {
 /** Storage Module */
 function loadProgress() {
     try {
-        const saved = localStorage.getItem('userProgress');
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        const saved = storage.getItem('userProgress');
         if (saved) return JSON.parse(saved);
     } catch (error) {
         console.error('Error loading progress:', error);
@@ -190,43 +246,98 @@ function loadStats() {
 
 function loadProfile() {
     try {
-        const saved = localStorage.getItem('userProfile');
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        const saved = storage.getItem('userProfile');
         if (saved) return JSON.parse(saved);
         return { name: 'Пользователь', avatar: 'https://ui-avatars.com/api/?name=Пользователь' };
     } catch (error) {
         console.error('Error loading profile:', error);
+        UI.showToast('Ошибка загрузки профиля. Используется стандартный профиль.', '❌');
         return { name: 'Пользователь', avatar: 'https://ui-avatars.com/api/?name=Пользователь' };
     }
 }
 
 function saveProgress() {
-    localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
-    UI.updateProgressDisplay();
-    UI.checkAchievements();
-    UI.checkBadges();
-    UI.showToast('Прогресс сохранён', '✅');
+    try {
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('userProgress', JSON.stringify(State.userProgress));
+        UI.updateProgressDisplay();
+        UI.checkAchievements();
+        UI.checkBadges();
+        UI.showToast('Прогресс сохранён', '✅');
+    } catch (error) {
+        console.error('Error saving progress:', error);
+        UI.showToast('Ошибка сохранения прогресса.', '❌');
+    }
 }
 
-function saveStats() {
+function loadStats() {
     try {
-        localStorage.setItem('userStats', JSON.stringify(State.userStats));
-        UI.updateStatsDisplay();
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        const saved = storage.getItem('userStats');
+        if (saved) return JSON.parse(saved);
+        return { points: 0, streak: 0, lastActiveDate: null, achievements: [], badges: [] };
     } catch (error) {
-        console.error('Error saving stats:', error);
+        console.error('Error loading stats:', error);
+        UI.showToast('Ошибка загрузки статистики. Используется стандартный профиль.', '❌');
+        return { points: 0, streak: 0, lastActiveDate: null, achievements: [], badges: [] };
     }
 }
 
 function saveProfile() {
     try {
-        localStorage.setItem('userProfile', JSON.stringify(State.userProfile));
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('userProfile', JSON.stringify(State.userProfile));
         UI.updateProfileDisplay();
     } catch (error) {
         console.error('Error saving profile:', error);
+        UI.showToast('Ошибка сохранения профиля.', '❌');
     }
 }
 
 /** UI Module */
 const UI = {
+    Notifications: {
+        shownNotifications: new Set(), // Храним показанные уведомления в памяти
+
+        showProgressMovedNotification() {
+            if (this.shownNotifications.has('progressMovedNotification')) {
+                console.log('Notification already shown');
+                return;
+            }
+
+            const notification = document.getElementById('progress-moved-notification');
+            if (notification) {
+                notification.style.display = 'flex';
+                this.shownNotifications.add('progressMovedNotification');
+                Analytics.trackEvent('notification_shown', { type: 'progress_moved' });
+            }
+        },
+
+        closeNotification(id) {
+            const notification = document.getElementById(id);
+            if (notification) {
+                notification.style.display = 'none';
+            }
+        }
+    },
+
+    showNotification(message) {
+        const modal = document.getElementById('notification-modal');
+        const modalMessage = document.getElementById('notification-message');
+        modalMessage.textContent = message;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        const closeBtn = document.getElementById('notification-close-btn');
+        closeBtn.focus(); // Фокус для доступности
+        Analytics.trackEvent('notification_shown', { message });
+    },
+
+    hideNotification() {
+        const modal = document.getElementById('notification-modal');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    },
     updateProgressDisplay() {
         const totalLessons = Data.course.lessons.length;
         const completedLessons = Data.course.lessons.filter(lesson => State.userProgress[lesson.id]?.completed).length;
@@ -624,8 +735,16 @@ const UI = {
         });
     },
     playSuccessSound() {
-        const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3');
-        audio.play().catch(error => console.error('Error playing sound:', error));
+        if ('Audio' in window) {
+            const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3');
+            audio.play().catch(error => {
+                console.warn('Sound playback failed:', error);
+                UI.showToast('Воспроизведение звука заблокировано. Проверьте настройки браузера.', '⚠️');
+            });
+        } else {
+            console.warn('Audio API not supported');
+            UI.showToast('Звук не поддерживается в этом браузере.', '⚠️');
+        }
     },
     showPage(page) {
         Utils.closeMenu();
@@ -638,20 +757,27 @@ const UI = {
         DOM.elements[`mobile-${page}-link`]?.setAttribute('aria-current', 'page');
     
         if (page === 'profile') {
-            Activity.renderActivities();
-            UI.updateProfileDisplay();
+            try {
+                Activity.renderActivities();
+                UI.updateProfileDisplay();
+            } catch (error) {
+                console.error('Error rendering activities on profile page:', error);
+                UI.showToast('Ошибка отображения активности на странице профиля.', '❌');
+            }
         }
     },
     toggleTheme() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
         DOM.elements.themeToggle.textContent = isDark ? '☀️' : '🌙';
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('theme', isDark ? 'dark' : 'light');
     },
     toggleContrast() {
         document.body.classList.toggle('high-contrast');
         const isHighContrast = document.body.classList.contains('high-contrast');
-        localStorage.setItem('contrast', isHighContrast ? 'high' : 'normal');
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('contrast', isHighContrast ? 'high' : 'normal');
     },
     toggleMenu() {
         State.isMenuOpen = !State.isMenuOpen;
@@ -735,6 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /** Initialization */
 function init() {
     try {
+        // Инициализация UI
         UI.renderLessons();
         UI.renderAchievements();
         UI.renderBadges();
@@ -743,8 +870,191 @@ function init() {
         UI.updateStatsDisplay();
         UI.updateProfileDisplay();
 
-        if (localStorage.getItem('theme') === 'dark') UI.toggleTheme();
-        if (localStorage.getItem('contrast') === 'high') UI.toggleContrast();
+        // Используем MemoryStorage для theme и contrast
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        if (storage.getItem('theme') === 'dark') {
+            console.log('Applying dark theme');
+            UI.toggleTheme();
+        }
+        if (storage.getItem('contrast') === 'high') {
+            console.log('Applying high contrast');
+            UI.toggleContrast();
+        }
+
+        // Показываем уведомление без cookies
+        UI.Notifications.showProgressMovedNotification();
+
+        // Добавляем универсальную функцию для обработчиков
+        const addClickHandler = (element, handler, eventName) => {
+            if (element) {
+                element.addEventListener('click', (e) => {
+                    try {
+                        console.log(`${eventName} clicked`);
+                        handler(e);
+                    } catch (error) {
+                        console.error(`Error in ${eventName} handler:`, error);
+                        UI.showToast(`Ошибка в ${eventName}. Проверьте консоль для деталей.`, '❌');
+                    }
+                });
+            } else {
+                console.warn(`Element for ${eventName} not found`);
+            }
+        };
+
+        // Обработчики для навигации
+        addClickHandler(DOM.elements.backBtn, () => {
+            UI.showPage('home');
+        }, 'backBtn');
+
+        addClickHandler(DOM.elements.startLearningBtn, (e) => {
+            e.preventDefault();
+            if (Data.course.lessons.length > 0) UI.showLessonPreview(Data.course.lessons[0].id);
+            Analytics.trackEvent('start_learning_clicked');
+        }, 'startLearningBtn');
+
+        addClickHandler(DOM.elements.continueLearningBtn, (e) => {
+            e.preventDefault();
+            const nextLesson = Data.course.lessons.find(lesson => !State.userProgress[lesson.id]?.completed);
+            if (nextLesson) UI.showLessonPreview(nextLesson.id);
+            Analytics.trackEvent('continue_learning_clicked');
+        }, 'continueLearningBtn');
+
+        addClickHandler(DOM.elements.homeLink, (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('nav_home_clicked');
+        }, 'homeLink');
+
+        addClickHandler(DOM.elements.achievementsLink, (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('nav_achievements_clicked');
+        }, 'achievementsLink');
+
+        addClickHandler(DOM.elements.profileLink, (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('nav_profile_clicked');
+        }, 'profileLink');
+
+        addClickHandler(DOM.elements.mobileHomeLink, (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('mobile_nav_home_clicked');
+        }, 'mobileHomeLink');
+
+        addClickHandler(DOM.elements.mobileAchievementsLink, (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('mobile_nav_achievements_clicked');
+        }, 'mobileAchievementsLink');
+
+        addClickHandler(DOM.elements.mobileProfileLink, (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('mobile_nav_profile_clicked');
+        }, 'mobileProfileLink');
+
+        // Обработчики для профиля
+        addClickHandler(DOM.elements.changeAvatarBtn, () => {
+            const newAvatar = prompt('Введите URL аватара:', State.userProfile.avatar);
+            if (!newAvatar || !Utils.validateUrl(newAvatar)) {
+                if (newAvatar) UI.showToast('Неверный URL аватара!', '❌');
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => {
+                State.userProfile.avatar = newAvatar;
+                saveProfile();
+                Analytics.trackEvent('avatar_changed');
+                UI.showToast('Аватар успешно обновлен!', '✅');
+            };
+            img.onerror = () => {
+                UI.showToast('Не удалось загрузить изображение!', '❌');
+            };
+            img.src = newAvatar;
+        }, 'changeAvatarBtn');
+
+        addClickHandler(DOM.elements.saveProfileBtn, () => {
+            const newName = Utils.sanitizeInput(DOM.elements.userNameInput.value.trim());
+            if (newName && newName.length <= 20) {
+                State.userProfile.name = newName || 'Пользователь';
+                State.userProfile.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}`;
+                saveProfile();
+                Activity.logActivity(Activity.activityTypes.PROFILE_UPDATED);
+                UI.showToast('Профиль сохранен!', '✅');
+                Analytics.trackEvent('profile_saved');
+            } else {
+                UI.showToast('Имя слишком длинное или пустое!', '❌');
+            }
+        }, 'saveProfileBtn');
+
+        // Обработчики для темы и контрастности
+        addClickHandler(DOM.elements.themeToggle, () => {
+            UI.toggleTheme();
+        }, 'themeToggle');
+
+        addClickHandler(DOM.elements.contrastToggle, () => {
+            UI.toggleContrast();
+        }, 'contrastToggle');
+
+        // Обработчики для меню
+        addClickHandler(DOM.elements.hamburger, () => {
+            UI.toggleMenu();
+        }, 'hamburger');
+
+        addClickHandler(DOM.elements.navOverlay, () => {
+            Utils.closeMenu();
+        }, 'navOverlay');
+
+        // Обработчик для закрытия модального окна
+        addClickHandler(DOM.elements.closeModalBtn, () => {
+            DOM.elements.lessonPreviewModal.style.display = 'none';
+        }, 'closeModalBtn');
+
+        // Обработчик для шаринга достижений
+        addClickHandler(DOM.elements.shareAchievements, () => {
+            const text = `Я набрал ${State.userStats.points} очков в обучении кибербезопасности! 🚀`;
+            if ('share' in navigator && typeof navigator.share === 'function') {
+                navigator.share({ title: 'Мои достижения', text, url: window.location.href })
+                    .then(() => {
+                        Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+                    })
+                    .catch(error => {
+                        console.warn('Share error:', error);
+                        // Фолбэк: копирование в буфер обмена
+                        if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                            navigator.clipboard.writeText(text)
+                                .then(() => {
+                                    UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                                })
+                                .catch(err => {
+                                    console.error('Clipboard copy failed:', err);
+                                    UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                                });
+                        } else {
+                            prompt('Скопируйте текст для публикации:', text);
+                        }
+                    });
+            } else {
+                // Фолбэк: копирование в буфер обмена
+                if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                        })
+                        .catch(err => {
+                            console.error('Clipboard copy failed:', err);
+                            UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                        });
+                } else {
+                    prompt('Скопируйте текст для публикации:', text);
+                }
+                Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+            }
+            Analytics.trackEvent('achievements_shared');
+        }, 'shareAchievements');
 
         DOM.elements.backBtn.addEventListener('click', () => UI.showPage('home'));
         DOM.elements.startLearningBtn.addEventListener('click', (e) => {
@@ -833,16 +1143,41 @@ function init() {
         });
         DOM.elements.shareAchievements.addEventListener('click', () => {
             const text = `Я набрал ${State.userStats.points} очков в обучении кибербезопасности! 🚀`;
-            if (navigator.share) {
+            if ('share' in navigator && typeof navigator.share === 'function') {
                 navigator.share({ title: 'Мои достижения', text, url: window.location.href })
                     .then(() => {
-                        // Log course shared activity
                         Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
                     })
-                    .catch(error => console.error('Share error:', error));
+                    .catch(error => {
+                        console.warn('Share error:', error);
+                        // Фолбэк: копирование в буфер обмена
+                        if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                            navigator.clipboard.writeText(text)
+                                .then(() => {
+                                    UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                                })
+                                .catch(err => {
+                                    console.error('Clipboard copy failed:', err);
+                                    UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                                });
+                        } else {
+                            prompt('Скопируйте текст для публикации:', text);
+                        }
+                    });
             } else {
-                prompt('Скопируйте текст для публикации:', text);
-                // Log course shared activity
+                // Фолбэк: копирование в буфер обмена
+                if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                        })
+                        .catch(err => {
+                            console.error('Clipboard copy failed:', err);
+                            UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                        });
+                } else {
+                    prompt('Скопируйте текст для публикации:', text);
+                }
                 Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
             }
             Analytics.trackEvent('achievements_shared');
