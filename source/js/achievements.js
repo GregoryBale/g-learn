@@ -252,11 +252,11 @@ if (!DOM || !State || !Data || !UI || !Analytics) {
 // Save stats to localStorage
 function saveStats() {
     try {
-        localStorage.setItem('userStats', JSON.stringify(State.userStats));
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('userStats', JSON.stringify(State.userStats));
         UI.updateStatsDisplay();
-        console.log('Achievements.saveStats: Stats saved', State.userStats);
     } catch (error) {
-        console.error('Achievements.saveStats: Error saving stats', error);
+        console.error('Error saving stats:', error);
         UI.showToast('Ошибка сохранения статистики.', '❌');
     }
 }
