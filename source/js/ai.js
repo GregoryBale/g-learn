@@ -67,45 +67,42 @@ function injectStyles() {
         /* Chat button */
 .ai-chat-btn {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 80px; /* Поднята выше навигационного меню */
+    right: 20px;
     background: linear-gradient(145deg, #0078d4, #00b7eb, #10aeff);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
     border: none;
     border-radius: 50px;
-    padding: 14px 22px;
+    padding: 12px 18px; /* Уменьшен размер */
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0, 120, 212, 0.3);
-    z-index: 10000;
+    box-shadow: 0 4px 16px rgba(0, 120, 212, 0.4);
+    z-index: 10001; /* Выше навигации, но ниже чата */
     transition: all 0.3s cubic-bezier(0.17, 0.84, 0.44, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     font-family: 'Segoe UI', sans-serif;
 }
 
 .ai-chat-btn:hover {
-    transform: scale(1.1) translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 120, 212, 0.5);
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 120, 212, 0.5);
     background: linear-gradient(145deg, #10aeff, #0078d4);
 }
         
-      .ai-chat-btn.desktop span {
+.ai-chat-btn.desktop span {
     color: white;
-    font-size: 16px;
+    font-size: 14px; /* Уменьшен шрифт */
     font-weight: 500;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
 }
         
 .ai-chat-btn svg {
-    width: 28px;
-    height: 28px;
+    width: 24px; /* Уменьшен размер иконки */
+    height: 24px;
     stroke: white;
     fill: none;
     transition: all 0.3s ease;
-    animation: rotateGlow 4s infinite ease-in-out;
 }
         
 @keyframes rotateGlow {
@@ -706,14 +703,15 @@ function injectStyles() {
         
         /* Mobile responsive design */
         @media (max-width: 768px) {
-            .ai-chat-btn {
-                bottom: 20px;
-                right: 20px;
-            }
-            
-            .ai-chat-btn.desktop span {
-                display: none;
-            }
+.ai-chat-btn {
+        bottom: 70px; /* Выше навигационного меню */
+        right: 15px;
+        padding: 10px 14px; /* Ещё компактнее */
+    }
+
+    .ai-chat-btn.desktop span {
+        display: inline; /* Текст виден на больших мобильных */
+    }
             
             .ai-chat-window {
                 width: 90%;
@@ -755,6 +753,18 @@ function injectStyles() {
             .ai-chat-input-container {
                 padding: 12px;
             }
+                .ai-chat-btn {
+        bottom: 65px;
+        right: 10px;
+        padding: 8px 10px; /* Минимальный размер */
+    }
+        .ai-chat-btn.desktop span {
+        display: none; /* Скрываем текст на маленьких экранах */
+    }
+
+    .ai-chat-btn svg {
+        width: 20px;
+        height: 20px;
         }
         
         /* Dark mode */
