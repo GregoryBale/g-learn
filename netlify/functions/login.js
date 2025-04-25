@@ -1,23 +1,81 @@
-const { Pool } = require('pg');
+const { db } = require('./db');
 const jwt = require('jsonwebtoken');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const bcrypt = require('bcrypt');
 
 exports.handler = async (event) => {
-    const { login, passwordHash } = JSON.parse(event.body);
+    if (!event.body) {
+        return {
+            statusCode: 400,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            body: JSON.stringify({ error: 'Отсутствует тело запроса' })
+        };
+    }
+
     try {
-        const client = await pool.connect();
-        const result = await client.query(
-            'SELECT id FROM users WHERE login = $1 AND password_hash = $2',
-            [login, passwordHash]
-        );
-        client.release();
-        if (result.rows.length > 0) {
-            const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET || 'your-secret-key');
-            return { statusCode: 200, body: JSON.stringify({ token }) };
-        } else {
-            return { statusCode: 401, body: JSON.stringify({ error: 'Неверный логин или пароль' }) };
+        const { login, password } = JSON.parse(event.body);
+        if (!login || !password) {
+            return {
+                statusCode: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Логин или пароль отсутствуют' })
+            };
         }
+
+        const users = await db('users').where({ login }).select('id', 'password_hash');
+        if (users.length === 0) {
+            return {
+                statusCode: 401,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Неверный логин или пароль' })
+            };
+        }
+
+        const isValid = await bcrypt.compare(password, users[0].password_hash);
+        if (!isValid) {
+            return {
+                statusCode: 401,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({ error: 'Неверный логин или пароль' })
+            };
+        }
+
+        const token = jwt.sign(
+            { userId: users[0].id },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({ token })
+        };
     } catch (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: 'Ошибка входа' }) };
+        console.error('Login error:', error);
+        return {
+            statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({ error: 'Ошибка входа' })
+        };
     }
 };
