@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация</title>
-    <link rel="stylesheet" href="source/css/styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="/source/css/styles.css">
 </head>
 <body>
     <div class="container">
@@ -23,27 +22,33 @@
     </div>
     <script>
         async function register() {
-            const login = document.getElementById('login').value;
+            const login = document.getElementById('login').value.trim();
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
-            const passwordHash = CryptoJS.SHA256(password).toString();
+
+            if (!login || !password) {
+                errorMessage.textContent = 'Введите логин и пароль.';
+                errorMessage.style.display = 'block';
+                return;
+            }
 
             try {
-                const response = await fetch('/.netlify/functions/register', {
+                const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ login, passwordHash })
+                    body: JSON.stringify({ login, password })
                 });
 
                 if (response.ok) {
                     alert('Регистрация успешна! Теперь вы можете войти.');
                     window.location.href = 'login.html';
                 } else {
-                    errorMessage.textContent = 'Ошибка регистрации. Возможно, логин занят.';
+                    const errorData = await response.json();
+                    errorMessage.textContent = errorData.error || 'Ошибка регистрации. Возможно, логин занят.';
                     errorMessage.style.display = 'block';
                 }
             } catch (error) {
-                errorMessage.textContent = 'Ошибка подключения к серверу.';
+                errorMessage.textContent = 'Ошибка подключения к серверу: ' + error.message;
                 errorMessage.style.display = 'block';
             }
         }
