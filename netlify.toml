@@ -1,2 +1,15 @@
 [build]
   functions = "netlify/functions"
+  publish = "."
+
+[dev]
+  command = ""
+  targetPort = 8888
+  port = 8888
+  autoLaunch = true
+  framework = "none"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
