@@ -325,5 +325,84 @@
             document.getElementById('lesson-page').style.display = 'none';
         });
     </script>
+        <script>
+        // Удаляем старую функциональность гамбургер-меню, так как она больше не нужна
+        // Новая навигация управляется через мобильное меню
+        const mobileHomeLink = document.querySelector('#mobile-home-link');
+        const mobileAchievementsLink = document.querySelector('#mobile-achievements-link');
+        const mobileProfileLink = document.querySelector('#mobile-profile-link');
+
+        mobileHomeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
+            mobileHomeLink.setAttribute('aria-current', 'page');
+            document.getElementById('home-page').style.display = 'block';
+            document.getElementById('achievements-page').style.display = 'none';
+            document.getElementById('profile-page').style.display = 'none';
+            document.getElementById('lesson-page').style.display = 'none';
+        });
+
+        mobileAchievementsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
+            mobileAchievementsLink.setAttribute('aria-current', 'page');
+            document.getElementById('home-page').style.display = 'none';
+            document.getElementById('achievements-page').style.display = 'block';
+            document.getElementById('profile-page').style.display = 'none';
+            document.getElementById('lesson-page').style.display = 'none';
+        });
+
+        mobileProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
+            mobileProfileLink.setAttribute('aria-current', 'page');
+            document.getElementById('home-page').style.display = 'none';
+            document.getElementById('achievements-page').style.display = 'none';
+            document.getElementById('profile-page').style.display = 'block';
+            document.getElementById('lesson-page').style.display = 'none';
+        });
+
+        // Cookies functionality for lessons and achievements
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // Save completed lesson
+        function completeLesson(lessonId) {
+            let lessons = getCookie('completedLessons');
+            lessons = lessons ? JSON.parse(lessons) : [];
+            if (!lessons.includes(lessonId)) {
+                lessons.push(lessonId);
+                setCookie('completedLessons', JSON.stringify(lessons), 365);
+            }
+        }
+
+        // Save achievement
+        function unlockAchievement(achievementId) {
+            let achievements = getCookie('achievements');
+            achievements = achievements ? JSON.parse(achievements) : [];
+            if (!achievements.includes(achievementId)) {
+                achievements.push(achievementId);
+                setCookie('achievements', JSON.stringify(achievements), 365);
+            }
+        }
+    </script>
 </body>
 </html>
