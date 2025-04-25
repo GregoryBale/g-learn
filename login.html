@@ -9,21 +9,22 @@
 <body>
     <div class="container">
         <h2>Вход в G-LEARN</h2>
-        <div id="login-form">
+        <form id="login-form" onsubmit="login(event)">
             <label for="login">Логин:</label>
             <input type="text" id="login" required>
             <label for="password">Пароль:</label>
             <input type="password" id="password" required>
-            <button onclick="login()">Войти</button>
+            <button type="submit">Войти</button>
             <p id="error-message" style="color: red; display: none;">Неверный логин или пароль</p>
-        </div>
+        </form>
         <p>Нет аккаунта? <a href="register.html">Зарегистрироваться</a></p>
         <button onclick="continueAsGuest()">Продолжить как гость</button>
     </div>
     <script>
-        async function login() {
+        async function login(event) {
+            event.preventDefault();
             const login = document.getElementById('login').value.trim();
-            const password = document.getElementById('password').value;
+            const password = document.getElementById('password').value.trim();
             const errorMessage = document.getElementById('error-message');
 
             if (!login || !password) {
@@ -42,6 +43,8 @@
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('token', data.token);
+                    localStorage.setItem('login', login); // Сохраняем логин для немедленного отображения
+                    alert(`Вы вошли как ${login}`);
                     window.location.href = 'index.html';
                 } else {
                     const errorData = await response.json();
