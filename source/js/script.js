@@ -993,212 +993,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /** Initialization */
 function init() {
-    try {
+    if (DOM.elements.homePage) {
         UI.renderLessons();
-        UI.renderAchievements();
-        UI.renderBadges();
-        UI.renderLeaderboard();
         UI.updateProgressDisplay();
-        UI.updateStatsDisplay();
+    }
+    if (DOM.elements.profilePage) {
         UI.updateProfileDisplay();
+        Activity.renderActivities();
+    }
+    if (DOM.elements.achievementsPage) {
+        Achievements.renderAchievements();
+        Achievements.renderBadges();
+    }
+    loadUserData();
+    loadProgress();
 
-        const storage = storageAvailable ? localStorage : MemoryStorage;
-        if (storage.getItem('theme') === 'dark') {
-            console.log('Applying dark theme');
-            UI.toggleTheme();
-        }
-        if (storage.getItem('contrast') === 'high') {
-            console.log('Applying high contrast');
-            UI.toggleContrast();
-        }
-
-        UI.Notifications.showProgressMovedNotification();
-
-        const addClickHandler = (element, handler, eventName) => {
-            if (element) {
-                element.addEventListener('click', (e) => {
-                    try {
-                        console.log(`${eventName} clicked`);
-                        handler(e);
-                    } catch (error) {
-                        console.error(`Error in ${eventName} handler:`, error);
-                        UI.showToast(`Ошибка в ${eventName}. Проверьте консоль для деталей.`, '❌');
-                    }
-                });
-            } else {
-                console.warn(`Element for ${eventName} not found`);
-            }
-        };
-
-        addClickHandler(DOM.elements.backBtn, () => {
-            UI.showPage('home');
-        }, 'backBtn');
-
-        addClickHandler(DOM.elements.startLearningBtn, (e) => {
-            e.preventDefault();
-            if (Data.course.lessons.length > 0) UI.showLessonPreview(Data.course.lessons[0].id);
-            Analytics.trackEvent('start_learning_clicked');
-        }, 'startLearningBtn');
-
-        addClickHandler(DOM.elements.continueLearningBtn, (e) => {
-            e.preventDefault();
-            const nextLesson = Data.course.lessons.find(lesson => !State.userProgress[lesson.id]?.completed);
-            if (nextLesson) UI.showLessonPreview(nextLesson.id);
-            Analytics.trackEvent('continue_learning_clicked');
-        }, 'continueLearningBtn');
-
-        addClickHandler(DOM.elements.homeLink, (e) => {
-            e.preventDefault();
-            UI.showPage('home');
-            Analytics.trackEvent('nav_home_clicked');
-        }, 'homeLink');
-
-        addClickHandler(DOM.elements.achievementsLink, (e) => {
-            e.preventDefault();
-            UI.showPage('achievements');
-            Analytics.trackEvent('nav_achievements_clicked');
-        }, 'achievementsLink');
-
-        addClickHandler(DOM.elements.profileLink, (e) => {
-            e.preventDefault();
-            UI.showPage('profile');
-            Analytics.trackEvent('nav_profile_clicked');
-        }, 'profileLink');
-
-        addClickHandler(DOM.elements.mobileHomeLink, (e) => {
-            e.preventDefault();
-            UI.showPage('home');
-            Analytics.trackEvent('mobile_nav_home_clicked');
-        }, 'mobileHomeLink');
-
-        addClickHandler(DOM.elements.mobileAchievementsLink, (e) => {
-            e.preventDefault();
-            UI.showPage('achievements');
-            Analytics.trackEvent('mobile_nav_achievements_clicked');
-        }, 'mobileAchievementsLink');
-
-        addClickHandler(DOM.elements.mobileProfileLink, (e) => {
-            e.preventDefault();
-            UI.showPage('profile');
-            Analytics.trackEvent('mobile_nav_profile_clicked');
-        }, 'mobileProfileLink');
-
-        addClickHandler(DOM.elements.changeAvatarBtn, () => {
-            const newAvatar = prompt('Введите URL аватара:', State.userProfile.avatar);
-            if (!newAvatar || !Utils.validateUrl(newAvatar)) {
-                if (newAvatar) UI.showToast('Неверный URL аватара!', '❌');
-                return;
-            }
-
-            const img = new Image();
-            img.onload = () => {
-                State.userProfile.avatar = newAvatar;
-                saveProfile();
-                Analytics.trackEvent('avatar_changed');
-                UI.showToast('Аватар успешно обновлен!', '✅');
-            };
-            img.onerror = () => {
-                UI.showToast('Не удалось загрузить изображение!', '❌');
-            };
-            img.src = newAvatar;
-        }, 'changeAvatarBtn');
-
-        addClickHandler(DOM.elements.saveProfileBtn, () => {
-            const newName = Utils.sanitizeInput(DOM.elements.userNameInput.value.trim());
-            if (newName && newName.length <= 20) {
-                State.userProfile.name = newName || 'Пользователь';
-                State.userProfile.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}`;
-                saveProfile();
-                Activity.logActivity(Activity.activityTypes.PROFILE_UPDATED);
-                UI.showToast('Профиль сохранен!', '✅');
-                Analytics.trackEvent('profile_saved');
-            } else {
-                UI.showToast('Имя слишком длинное или пустое!', '❌');
-            }
-        }, 'saveProfileBtn');
-
-        addClickHandler(DOM.elements.themeToggle, () => {
-            UI.toggleTheme();
-        }, 'themeToggle');
-
-        addClickHandler(DOM.elements.contrastToggle, () => {
-            UI.toggleContrast();
-        }, 'contrastToggle');
-
-        addClickHandler(DOM.elements.hamburger, () => {
-            UI.toggleMenu();
-        }, 'hamburger');
-
-        addClickHandler(DOM.elements.navOverlay, () => {
-            Utils.closeMenu();
-        }, 'navOverlay');
-
-        addClickHandler(DOM.elements.closeModalBtn, () => {
-            DOM.elements.lessonPreviewModal.style.display = 'none';
-        }, 'closeModalBtn');
-
-        addClickHandler(DOM.elements.shareAchievements, () => {
-            const text = `Я набрал ${State.points} очков в обучении кибербезопасности! 🚀`;
-            if ('share' in navigator && typeof navigator.share === 'function') {
-                navigator.share({ title: 'Мои достижения', text, url: window.location.href })
-                    .then(() => {
-                        Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
-                    })
-                    .catch(error => {
-                        console.warn('Share error:', error);
-                        if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
-                            navigator.clipboard.writeText(text)
-                                .then(() => {
-                                    UI.showToast('Текст скопирован в буфер обмена!', '📋');
-                                })
-                                .catch(err => {
-                                    console.error('Clipboard copy failed:', err);
-                                    UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
-                                });
-                        } else {
-                            prompt('Скопируйте текст для публикации:', text);
-                        }
-                    });
-            } else {
-                if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
-                    navigator.clipboard.writeText(text)
-                        .then(() => {
-                            UI.showToast('Текст скопирован в буфер обмена!', '📋');
-                        })
-                        .catch(err => {
-                            console.error('Clipboard copy failed:', err);
-                            UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
-                        });
-                } else {
-                    prompt('Скопируйте текст для публикации:', text);
-                }
-                Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
-            }
-            Analytics.trackEvent('achievements_shared');
-        }, 'shareAchievements');
-
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 768 && State.isMenuOpen) {
-                Utils.closeMenu();
-            }
+    if (DOM.elements.loginButton) {
+        DOM.elements.loginButton.addEventListener('click', () => {
+            window.location.href = '/login.html';
         });
-
-        DOM.elements.userNameInput.addEventListener('input', Utils.debounce(() => {
-            const newName = DOM.elements.userNameInput.value.trim();
-            if (newName.length > 20) {
-                UI.showToast('Имя не должно превышать 20 символов!', '❌');
-            }
-        }, 500));
-
-        DOM.elements.navMenu.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && State.isMenuOpen) {
-                Utils.closeMenu();
-            }
+    }
+    if (DOM.elements.registerButton) {
+        DOM.elements.registerButton.addEventListener('click', () => {
+            window.location.href = '/register.html';
         });
-    } catch (error) {
-        console.error('Initialization error:', error);
+    }
+    if (DOM.elements.logoutButton) {
+        DOM.elements.logoutButton.addEventListener('click', UI.logout);
     }
 }
 
-init();
-window.saveProgress = saveProgress;
+document.addEventListener('DOMContentLoaded', init);
