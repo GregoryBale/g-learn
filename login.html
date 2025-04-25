@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход</title>
-<link rel="stylesheet" href="/source/css/styles.css">
-<link rel="stylesheet" href="/source/css/auth.css">
+    <link rel="stylesheet" href="/source/css/styles.css">
+    <link rel="stylesheet" href="/source/css/auth.css">
 </head>
 <body>
     <div class="container">
         <h2>Вход в G-LEARN</h2>
-        <form id="login-form" onsubmit="login(event)">
+        <form id="login-form">
             <label for="login">Логин:</label>
             <input type="text" id="login" required>
             <label for="password">Пароль:</label>
@@ -24,35 +24,38 @@
     <script>
         async function login(event) {
             event.preventDefault();
-            const login = document.getElementById('login').value.trim();
-            const password = document.getElementById('password').value.trim();
+            const loginInput = document.getElementById('login').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
             const errorMessage = document.getElementById('error-message');
 
-            if (!login || !password) {
+            if (!loginInput || !passwordInput) {
                 errorMessage.textContent = 'Введите логин и пароль.';
                 errorMessage.style.display = 'block';
                 return;
             }
 
             try {
+                console.log('Sending login request:', { login: loginInput });
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ login, password })
+                    body: JSON.stringify({ login: loginInput, password: passwordInput })
                 });
 
+                const responseData = await response.json();
+                console.log('Login response:', responseData);
+
                 if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('login', login); // Сохраняем логин для немедленного отображения
-                    alert(`Вы вошли как ${login}`);
+                    localStorage.setItem('token', responseData.token);
+                    localStorage.setItem('login', loginInput);
+                    alert(`Вы вошли как ${loginInput}`);
                     window.location.href = 'index.html';
                 } else {
-                    const errorData = await response.json();
-                    errorMessage.textContent = errorData.error || 'Неверный логин или пароль';
+                    errorMessage.textContent = responseData.error || 'Неверный логин или пароль';
                     errorMessage.style.display = 'block';
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 errorMessage.textContent = 'Ошибка подключения к серверу: ' + error.message;
                 errorMessage.style.display = 'block';
             }
@@ -61,6 +64,9 @@
         function continueAsGuest() {
             window.location.href = 'index.html';
         }
+
+        // Добавляем обработчик события
+        document.getElementById('login-form').addEventListener('submit', login);
     </script>
 </body>
 </html>
