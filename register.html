@@ -3,29 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-LEARN - Регистрация</title>
+    <title>Регистрация</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="/source/images/favicon.ico" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Регистрация в G-LEARN</h1>
-        <form id="register-form">
-            <div class="form-group">
-                <label for="username">Логин:</label>
-                <input type="text" id="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Пароль:</label>
-                <input type="password" id="password" required>
-            </div>
-            <button type="submit" class="btn primary-btn">Зарегистрироваться</button>
-        </form>
+        <h2>Регистрация в G-LEARN</h2>
+        <div id="register-form">
+            <label for="login">Логин:</label>
+            <input type="text" id="login" required>
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" required>
+            <button onclick="register()">Зарегистрироваться</button>
+            <p id="error-message" style="color: red; display: none;">Ошибка регистрации</p>
+        </div>
         <p>Уже есть аккаунт? <a href="login.html">Войдите</a></p>
-        <p><a href="index.html">Продолжить как гость</a></p>
-        <div id="error-message" style="color: red; display: none;"></div>
+        <button onclick="continueAsGuest()">Продолжить как гость</button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="auth.js"></script>
+    <script>
+        async function register() {
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            const passwordHash = CryptoJS.SHA256(password).toString();
+
+            try {
+                const response = await fetch('/.netlify/functions/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, passwordHash })
+                });
+
+                if (response.ok) {
+                    alert('Регистрация успешна! Теперь вы можете войти.');
+                    window.location.href = 'login.html';
+                } else {
+                    errorMessage.textContent = 'Ошибка регистрации. Возможно, логин занят.';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Ошибка подключения к серверу.';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function continueAsGuest() {
+            window.location.href = 'index.html';
+        }
+    </script>
 </body>
 </html>
