@@ -5,6 +5,7 @@
 
 /** Achievements Module */
 const Achievements = {
+    // Initialize the achievements system
     init() {
         console.log('Achievements.init: Starting initialization');
         this.resetAchievementsIfInvalid();
@@ -18,6 +19,7 @@ const Achievements = {
         this.updateNoBadgesMessage();
     },
 
+    // Reset achievements if they are invalid (e.g., unlocked without progress)
     resetAchievementsIfInvalid() {
         console.log('Achievements.resetAchievementsIfInvalid: Checking validity');
         const savedStats = localStorage.getItem('userStats');
@@ -44,21 +46,23 @@ const Achievements = {
         }
     },
 
+    // Load achievements and badges from storage
     loadAchievements() {
         try {
             const savedStats = localStorage.getItem('userStats');
             if (savedStats) {
-                State.achievements = JSON.parse(savedStats).achievements || [];
-                State.badges = JSON.parse(savedStats).badges || [];
-                State.points = JSON.parse(savedStats).points || 0;
-                State.streak = JSON.parse(savedStats).streak || 0;
-                console.log('Achievements.loadAchievements: Loaded stats', State);
+                State.userStats = JSON.parse(savedStats);
+                console.log('Achievements.loadAchievements: Loaded stats', State.userStats);
             } else {
-                State.achievements = [];
-                State.badges = [];
-                State.points = 0;
-                State.streak = 0;
-                saveProgress();
+                State.userStats = {
+                    points: 0,
+                    streak: 0,
+                    lastActiveDate: null,
+                    achievements: [],
+                    badges: [],
+                    actions: []
+                };
+                saveStats();
                 console.log('Achievements.loadAchievements: Initialized empty stats');
             }
         } catch (error) {
@@ -67,6 +71,7 @@ const Achievements = {
         }
     },
 
+    // Bind event listeners for actions that may trigger achievements
     bindEvents() {
         console.log('Achievements.bindEvents: Binding events');
         DOM.elements.submitQuizBtn.addEventListener('click', () => {
@@ -88,10 +93,10 @@ const Achievements = {
         });
 
         DOM.elements.shareAchievements.addEventListener('click', () => {
-            State.actions = State.actions || [];
-            if (!State.actions.includes('shared_course')) {
-                State.actions.push('shared_course');
-                saveProgress();
+            State.userStats.actions = State.userStats.actions || [];
+            if (!State.userStats.actions.includes('shared_course')) {
+                State.userStats.actions.push('shared_course');
+                saveStats();
                 console.log('Achievements.bindEvents: Achievements shared, checking badges');
                 this.checkBadges();
                 this.updateNoBadgesMessage();
@@ -119,24 +124,26 @@ const Achievements = {
         });
     },
 
+    // Check and unlock achievements
     checkAchievements() {
         Data.achievements.forEach(achievement => {
-            if (!State.achievements.includes(achievement.id) && achievement.condition(State.userProgress, State)) {
-                State.achievements.push(achievement.id);
+            if (!State.userStats.achievements.includes(achievement.id) && achievement.condition(State.userProgress, State.userStats)) {
+                State.userStats.achievements.push(achievement.id);
+                // Log achievement unlock activity
                 Activity.logActivity(Activity.activityTypes.ACHIEVEMENT_UNLOCKED, { achievementId: achievement.id });
                 UI.showToast(`Достижение: ${achievement.title}!`, achievement.icon);
                 UI.triggerConfetti();
-                saveProgress();
-                Analytics.trackEvent('achievement_unlocked', { achievementId: achievement.id });
+                saveStats();
             }
         });
     },
 
+    // Check and unlock badges
     checkBadges() {
         console.log('Achievements.checkBadges: Checking badges');
         Data.badges.forEach(badge => {
-            const isUnlocked = State.badges.includes(badge.id);
-            if (!isUnlocked && badge.condition(State.userProgress, State)) {
+            const isUnlocked = State.userStats.badges.includes(badge.id);
+            if (!isUnlocked && badge.condition(State.userProgress, State.userStats)) {
                 console.log(`Achievements.checkBadges: Unlocking badge ${badge.id}`);
                 this.unlockBadge(badge);
             }
@@ -144,25 +151,27 @@ const Achievements = {
         this.updateNoBadgesMessage();
     },
 
+    // Unlock an achievement
     unlockAchievement(achievement) {
-        State.achievements.push(achievement.id);
+        State.userStats.achievements.push(achievement.id);
         UI.showToast(`Достижение разблокировано: ${achievement.title}!`, achievement.icon);
         UI.triggerConfetti();
         if (State.isSoundEnabled) UI.playSuccessSound();
-        saveProgress();
+        saveStats();
         this.renderAchievements();
         this.updateNoAchievementsMessage();
         console.log(`Achievements.unlockAchievement: Unlocked ${achievement.id}`);
         Analytics.trackEvent('achievement_unlocked', { achievementId: achievement.id });
     },
 
+    // Unlock a badge
     unlockBadge(badge) {
-        State.badges.push(badge.id);
-        State.points += badge.points;
+        State.userStats.badges.push(badge.id);
+        State.userStats.points += badge.points;
         UI.showToast(`Награда получена: ${badge.title}! +${badge.points} очков`, badge.icon);
         UI.triggerConfetti();
         if (State.isSoundEnabled) UI.playSuccessSound();
-        saveProgress();
+        saveStats();
         this.renderBadges();
         this.updateNoBadgesMessage();
         UI.updateStatsDisplay();
@@ -170,11 +179,12 @@ const Achievements = {
         Analytics.trackEvent('badge_unlocked', { badgeId: badge.id, points: badge.points });
     },
 
+    // Render achievements to the UI
     renderAchievements() {
-        console.log('Achievements.renderAchievements: Rendering achievements', State.achievements);
+        console.log('Achievements.renderAchievements: Rendering achievements', State.userStats.achievements);
         DOM.elements.achievementsContainer.innerHTML = '';
         Data.achievements.forEach(achievement => {
-            const isUnlocked = State.achievements.includes(achievement.id);
+            const isUnlocked = State.userStats.achievements.includes(achievement.id);
             console.log(`Achievements.renderAchievements: Achievement ${achievement.id}, isUnlocked: ${isUnlocked}`);
             const card = document.createElement('div');
             card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
@@ -190,11 +200,12 @@ const Achievements = {
         this.updateNoAchievementsMessage();
     },
 
+    // Render badges to the UI
     renderBadges() {
-        console.log('Achievements.renderBadges: Rendering badges', State.badges);
+        console.log('Achievements.renderBadges: Rendering badges', State.userStats.badges);
         DOM.elements.badgesContainer.innerHTML = '';
         Data.badges.forEach(badge => {
-            const isUnlocked = State.badges.includes(badge.id);
+            const isUnlocked = State.userStats.badges.includes(badge.id);
             console.log(`Achievements.renderBadges: Badge ${badge.id}, isUnlocked: ${isUnlocked}`);
             const card = document.createElement('div');
             card.className = `badge-card ${isUnlocked ? 'unlocked' : 'locked'}`;
@@ -210,19 +221,21 @@ const Achievements = {
         this.updateNoBadgesMessage();
     },
 
+    // Show or hide the no-achievements message
     updateNoAchievementsMessage() {
         const noAchievementsMessage = document.getElementById('no-achievements-message');
         if (noAchievementsMessage) {
-            const display = State.achievements.length === 0 ? 'block' : 'none';
+            const display = State.userStats.achievements.length === 0 ? 'block' : 'none';
             noAchievementsMessage.style.display = display;
             console.log(`Achievements.updateNoAchievementsMessage: Display set to ${display}`);
         }
     },
 
+    // Show or hide the no-badges message
     updateNoBadgesMessage() {
         const noBadgesMessage = document.getElementById('no-badges-message');
         if (noBadgesMessage) {
-            const display = State.badges.length === 0 ? 'block' : 'none';
+            const display = State.userStats.badges.length === 0 ? 'block' : 'none';
             noBadgesMessage.style.display = display;
             console.log(`Achievements.updateNoBadgesMessage: Display set to ${display}`);
         }
@@ -236,6 +249,19 @@ if (!DOM || !State || !Data || !UI || !Analytics) {
     throw new Error('Missing required modules');
 }
 
+// Save stats to localStorage
+function saveStats() {
+    try {
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('userStats', JSON.stringify(State.userStats));
+        UI.updateStatsDisplay();
+    } catch (error) {
+        console.error('Error saving stats:', error);
+        UI.showToast('Ошибка сохранения статистики.', '❌');
+    }
+}
+
+// Initialize the achievements system
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Achievements: DOMContentLoaded, initializing');
     Achievements.init();
