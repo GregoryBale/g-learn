@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Вход в G-LEARN</h2>
+        <div id="login-form">
+            <label for="login">Логин:</label>
+            <input type="text" id="login" required>
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" required>
+            <button onclick="login()">Войти</button>
+            <p id="error-message" style="color: red; display: none;">Неверный логин или пароль</p>
+        </div>
+        <p>Нет аккаунта? <a href="register.html">Зарегистрироваться</a></p>
+        <button onclick="continueAsGuest()">Продолжить как гость</button>
+    </div>
+    <script>
+        async function login() {
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            const passwordHash = CryptoJS.SHA256(password).toString();
+
+            try {
+                const response = await fetch('/.netlify/functions/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, passwordHash })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.token);
+                    window.location.href = 'index.html';
+                } else {
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Ошибка подключения к серверу.';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function continueAsGuest() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
