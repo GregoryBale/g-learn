@@ -1,26 +1,47 @@
-async function register() {
-    const login = document.getElementById('login').value;
-    const password = document.getElementById('password').value;
-    const errorMessage = document.getElementById('error-message');
-    const passwordHash = CryptoJS.SHA256(password).toString();
+require('dotenv').config();
+const { Pool } = require('pg');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+exports.handler = async (event) => {
+    if (!event.body) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Отсутствует тело запроса' })
+        };
+    }
 
     try {
-        const response = await fetch('/.netlify/functions/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login, passwordHash })
-        });
-
-        if (response.ok) {
-            alert('Регистрация успешна! Теперь вы можете войти.');
-            window.location.href = 'login.html';
-        } else {
-            const data = await response.json();
-            errorMessage.textContent = data.error || 'Ошибка регистрации';
-            errorMessage.style.display = 'block';
+        const { login, passwordHash } = JSON.parse(event.body);
+        if (!login || !passwordHash) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Логин и пароль обязательны' })
+            };
         }
+
+        const client = await pool.connect();
+        const result = await client.query(
+            'INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id',
+            [login, passwordHash]
+        );
+        await client.query(
+            'INSERT INTO user_progress (user_id, progress) VALUES ($1, $2)',
+            [result.rows[0].id, '{}']
+        );
+        await client.query(
+            'INSERT INTO user_stats (user_id, points, streak, achievements, badges) VALUES ($1, $2, $3, $4, $5)',
+            [result.rows[0].id, 0, 0, '[]', '[]']
+        );
+        client.release();
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ id: result.rows[0].id })
+        };
     } catch (error) {
-        errorMessage.textContent = 'Ошибка подключения к серверу: ' + error.message;
-        errorMessage.style.display = 'block';
+        console.error('Ошибка в register.js:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Ошибка регистрации', details: error.message })
+        };
     }
-}
+};
