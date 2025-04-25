@@ -1,99 +1,70 @@
-const { db } = require('./db');
+const { PrismaClient } = require('@prisma/client');
 const jwt = require('jsonwebtoken');
 
-exports.handler = async (event) => {
-    console.log('Progress request:', event);
+const prisma = new PrismaClient();
 
-    const token = event.headers.authorization?.split(' ')[1];
+exports.handler = async (event, context) => {
+    const token = event.headers.authorization?.replace('Bearer ', '');
     if (!token) {
         return {
             statusCode: 401,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-            },
-            body: JSON.stringify({ error: 'Неавторизован' })
+            body: JSON.stringify({ error: 'Токен не предоставлен' })
         };
     }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userId;
+        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        if (!user) {
+            return {
+                statusCode: 401,
+                body: JSON.stringify({ error: 'Пользователь не найден' })
+            };
+        }
 
         if (event.httpMethod === 'GET') {
-            const progress = await db('user_progress').where({ user_id: userId }).select('progress').first();
-            const stats = await db('user_stats').where({ user_id: userId }).select('points', 'streak', 'achievements', 'badges').first();
+            const progress = await prisma.progress.findUnique({ where: { userId: user.id } });
             return {
                 statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
                 body: JSON.stringify({
-                    progress: progress?.progress || {},
-                    points: stats?.points || 0,
-                    streak: stats?.streak || 0,
-                    achievements: stats?.achievements ? JSON.parse(stats.achievements) : [],
-                    badges: stats?.badges ? JSON.parse(stats.badges) : []
+                    progress: progress?.data || {},
+                    points: progress?.points || 0,
+                    streak: progress?.streak || 0,
+                    achievements: progress?.achievements || [],
+                    badges: progress?.badges || []
                 })
             };
-        } else if (event.httpMethod === 'POST') {
-            if (!event.body) {
-                return {
-                    statusCode: 400,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
-                    body: JSON.stringify({ error: 'Отсутствует тело запроса' })
-                };
-            }
-            const data = JSON.parse(event.body);
-            console.log('Saving progress:', data);
-            await db('user_progress')
-                .insert({ user_id: userId, progress: data.progress || {} })
-                .onConflict('user_id')
-                .merge();
-            await db('user_stats')
-                .insert({
-                    user_id: userId,
-                    points: data.points || 0,
-                    streak: data.streak || 0,
-                    achievements: JSON.stringify(data.achievements || []),
-                    badges: JSON.stringify(data.badges || [])
-                })
-                .onConflict('user_id')
-                .merge();
+        }
+
+        if (event.httpMethod === 'POST') {
+            const { progress, points, streak, achievements, badges } = JSON.parse(event.body);
+            await prisma.progress.upsert({
+                where: { userId: user.id },
+                update: { data: progress, points, streak, achievements, badges },
+                create: {
+                    userId: user.id,
+                    data: progress,
+                    points,
+                    streak,
+                    achievements,
+                    badges
+                }
+            });
             return {
                 statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
                 body: JSON.stringify({ message: 'Прогресс сохранён' })
             };
         }
+
+        return {
+            statusCode: 405,
+            body: JSON.stringify({ error: 'Метод не поддерживается' })
+        };
     } catch (error) {
         console.error('Progress error:', error);
-        if (error.name === 'TokenExpiredError') {
-            return {
-                statusCode: 401,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'Токен истек. Пожалуйста, войдите снова.' })
-            };
-        }
         return {
             statusCode: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: JSON.stringify({ error: 'Ошибка обработки прогресса' })
+            body: JSON.stringify({ error: 'Ошибка сервера: ' + error.message })
         };
     }
 };
