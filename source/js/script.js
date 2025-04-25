@@ -2,10 +2,6 @@
  * Cybersecurity Learning Platform
  * Enhanced with modular structure, accessibility, and fixed navigation menu
  */
-function isAuthenticated() {
-    return !!localStorage.getItem('token');
-}
-
 const Analytics = {
     trackEvent(eventName, data) {
         console.log(`Analytics event: ${eventName}`, data);
@@ -39,6 +35,50 @@ function isPrivateMode() {
 
 if (isPrivateMode()) {
     UI.showToast('Вы в приватном режиме. Прогресс не сохраняется между сессиями.', '⚠️');
+}
+
+async function loadUserData() {
+    if (isAuthenticated()) {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/user-data', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                State.login = data.login;
+                updateProfileUI(); // Обновляем UI
+            } else {
+                const errorData = await response.json();
+                UI.showToast(errorData.error || 'Ошибка загрузки данных пользователя', '❌');
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                }
+            }
+        } catch (error) {
+            UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
+        }
+    }
+}
+
+function updateProfileUI() {
+    const profileLink = document.querySelector('#profile-link');
+    const profileName = document.querySelector('#profile-name'); // Предполагаемый элемент для имени
+
+    if (isAuthenticated() && State.login) {
+        profileLink.textContent = `Профиль (${State.login})`;
+        profileLink.href = '#profile'; // Или ссылка на страницу профиля
+        if (profileName) {
+            profileName.textContent = State.login; // Обновляем поле имени
+        }
+    } else {
+        profileLink.textContent = 'Вход/Регистрация';
+        profileLink.href = 'login.html';
+        if (profileName) {
+            profileName.textContent = 'Гость';
+        }
+    }
 }
 
 // Проверка на блокировку JavaScript
@@ -132,13 +172,12 @@ const State = {
     streak: 0,
     achievements: [],
     badges: [],
-    currentLessonId: null,
-    userProgress: loadProgress(),
-    userStats: loadStats(),
-    userProfile: loadProfile(),
-    isSoundEnabled: true,
-    isMenuOpen: false
+    login: null // Добавляем для хранения логина
 };
+
+function isAuthenticated() {
+    return !!localStorage.getItem('token');
+}
 
 /** Utility Module */
 const Utils = {
@@ -240,12 +279,14 @@ async function loadProgress() {
                 State.streak = data.streak || 0;
                 State.achievements = data.achievements || [];
                 State.badges = data.badges || [];
+                console.log('Loaded progress from server:', data); // Для отладки
                 return State.userProgress;
             } else {
                 const errorData = await response.json();
                 UI.showToast(errorData.error || 'Ошибка загрузки прогресса', '❌');
                 if (response.status === 401) {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('login');
                     window.location.href = 'login.html';
                 }
                 return {};
@@ -255,12 +296,13 @@ async function loadProgress() {
             return {};
         }
     } else {
-        const saved = localStorage.getItem('userProgress');
-        State.userProgress = saved ? JSON.parse(saved) : {};
-        State.points = parseInt(localStorage.getItem('points')) || 0;
-        State.streak = parseInt(localStorage.getItem('streak')) || 0;
-        State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
-        State.badges = JSON.parse(localStorage.getItem('badges')) || [];
+        // Для гостей не используем localStorage, возвращаем пустой прогресс
+        State.userProgress = {};
+        State.points = 0;
+        State.streak = 0;
+        State.achievements = [];
+        State.badges = [];
+        UI.showToast('Войдите, чтобы сохранить прогресс', 'ℹ️');
         return State.userProgress;
     }
 }
@@ -299,6 +341,7 @@ async function saveProgress() {
             achievements: State.achievements,
             badges: State.badges
         };
+        console.log('Saving progress to server:', data); // Для отладки
         try {
             const response = await fetch('/api/progress', {
                 method: 'POST',
@@ -315,6 +358,7 @@ async function saveProgress() {
                 UI.showToast(errorData.error || 'Ошибка сохранения прогресса', '❌');
                 if (response.status === 401) {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('login');
                     window.location.href = 'login.html';
                 }
             }
@@ -322,12 +366,7 @@ async function saveProgress() {
             UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
         }
     } else {
-        localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
-        localStorage.setItem('points', State.points);
-        localStorage.setItem('streak', State.streak);
-        localStorage.setItem('achievements', JSON.stringify(State.achievements));
-        localStorage.setItem('badges', JSON.stringify(State.badges));
-        UI.showToast('Прогресс сохранён локально', '✅');
+        UI.showToast('Войдите, чтобы сохранить прогресс', 'ℹ️');
     }
     UI.updateProgressDisplay();
     UI.checkAchievements();
@@ -906,6 +945,18 @@ DOM.elements.navOverlay.addEventListener('click', () => {
     }
 });
 
+
+loadUserData();
+loadProgress();
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadUserData();
+    loadProgress();
+    if (isAuthenticated() && localStorage.getItem('login')) {
+        UI.showToast(`Вы вошли как ${localStorage.getItem('login')}`, '✅');
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('notification-close-btn');
     if (closeBtn) {
@@ -919,6 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
             UI.continueLearning();
         });
     }
+    loadUserData();
+    loadProgress();
 });
 
 /** Initialization */
