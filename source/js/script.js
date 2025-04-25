@@ -275,44 +275,43 @@ const Progress = {
 async function loadProgress() {
     if (isAuthenticated()) {
         const token = localStorage.getItem('token');
+        console.log('Loading progress with token:', token);
         try {
-            console.log('Loading progress with token:', token);
             const response = await fetch('/api/progress', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            console.log('Progress response status:', response.status);
             if (response.ok) {
                 const data = await response.json();
+                console.log('Progress data:', data);
                 State.userProgress = data.progress || {};
                 State.points = data.points || 0;
                 State.streak = data.streak || 0;
                 State.achievements = data.achievements || [];
                 State.badges = data.badges || [];
-                console.log('Progress loaded:', data);
-                return State.userProgress;
             } else {
-                const errorData = await response.json();
-                UI.showToast(errorData.error || 'Ошибка загрузки прогресса', '❌');
-                if (response.status === 401) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('login');
-                    window.location.href = 'login.html';
-                }
-                return {};
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
         } catch (error) {
             console.error('Error loading progress:', error);
-            UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
-            return {};
+            UI.showToast('Ошибка загрузки прогресса. Используется локальный прогресс.', '❌');
+            const saved = localStorage.getItem('userProgress');
+            State.userProgress = saved ? JSON.parse(saved) : {};
+            State.points = parseInt(localStorage.getItem('points')) || 0;
+            State.streak = parseInt(localStorage.getItem('streak')) || 0;
+            State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+            State.badges = JSON.parse(localStorage.getItem('badges')) || [];
         }
     } else {
+        console.log('No auth, loading local progress');
         const saved = localStorage.getItem('userProgress');
         State.userProgress = saved ? JSON.parse(saved) : {};
         State.points = parseInt(localStorage.getItem('points')) || 0;
         State.streak = parseInt(localStorage.getItem('streak')) || 0;
         State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
         State.badges = JSON.parse(localStorage.getItem('badges')) || [];
-        return State.userProgress;
     }
+    UI.updateProgressDisplay();
 }
 
 function loadStats() {
