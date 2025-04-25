@@ -37,56 +37,6 @@ if (isPrivateMode()) {
     UI.showToast('Вы в приватном режиме. Прогресс не сохраняется между сессиями.', '⚠️');
 }
 
-async function loadUserData() {
-    if (isAuthenticated()) {
-        const token = localStorage.getItem('token');
-        try {
-            console.log('Loading user data with token:', token);
-            const response = await fetch('/api/user-data', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                State.login = data.login;
-                updateProfileUI();
-                console.log('User data loaded:', data);
-            } else {
-                const errorData = await response.json();
-                UI.showToast(errorData.error || 'Ошибка загрузки данных пользователя', '❌');
-                if (response.status === 401) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('login');
-                    window.location.href = 'login.html';
-                }
-            }
-        } catch (error) {
-            console.error('Error loading user data:', error);
-            UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
-        }
-    } else {
-        updateProfileUI(); // Обновляем UI для гостей
-    }
-}
-
-function updateProfileUI() {
-    const profileLink = document.querySelector('#profile-link');
-    const profileName = document.querySelector('#profile-name');
-
-    if (isAuthenticated() && State.login) {
-        profileLink.textContent = `Профиль (${State.login})`;
-        profileLink.href = '#profile';
-        if (profileName) {
-            profileName.textContent = State.login;
-        }
-    } else {
-        profileLink.textContent = 'Вход/Регистрация';
-        profileLink.href = 'login.html';
-        if (profileName) {
-            profileName.textContent = 'Гость';
-        }
-    }
-}
-
 // Проверка на блокировку JavaScript
 if (typeof window !== 'undefined') {
     window.addEventListener('load', () => {
@@ -167,26 +117,19 @@ const DOM = {
         mobileNav: document.getElementById('mobile-nav'),
         mobileHomeLink: document.getElementById('mobile-home-link'),
         mobileAchievementsLink: document.getElementById('mobile-achievements-link'),
-        mobileProfileLink: document.getElementById('mobile-profile-link'),
-        loginButton: document.getElementById('login-button'),
-        registerButton: document.getElementById('register-button'),
-        logoutButton: document.getElementById('logout-button')
+        mobileProfileLink: document.getElementById('mobile-profile-link')
     }
 };
 
 /** State Module */
 const State = {
-    userProgress: {},
-    points: 0,
-    streak: 0,
-    achievements: [],
-    badges: [],
-    login: null
+    currentLessonId: null,
+    userProgress: loadProgress(),
+    userStats: loadStats(),
+    userProfile: loadProfile(),
+    isSoundEnabled: true,
+    isMenuOpen: false
 };
-
-function isAuthenticated() {
-    return !!localStorage.getItem('token');
-}
 
 /** Utility Module */
 const Utils = {
@@ -230,18 +173,20 @@ const Utils = {
 const Progress = {
     saveProgress() {
         try {
+            // Сохраняем прогресс в localStorage
             localStorage.setItem('cybersecurityProgress', JSON.stringify(this.progress));
+            // Проверяем, действительно ли данные сохранены
             const savedData = localStorage.getItem('cybersecurityProgress');
             if (savedData && JSON.parse(savedData)) {
                 console.log('Progress saved successfully:', this.progress);
-                return true;
+                return true; // Успешное сохранение
             } else {
                 throw new Error('Failed to verify saved progress');
             }
         } catch (error) {
             console.error('Error saving progress:', error);
             UI.showToast('Не удалось сохранить прогресс. Проверьте настройки браузера.', '❌');
-            return false;
+            return false; // Ошибка сохранения
         }
     },
 
@@ -272,46 +217,20 @@ const Progress = {
 };
 
 /** Storage Module */
-async function loadProgress() {
-    if (isAuthenticated()) {
-        const token = localStorage.getItem('token');
-        console.log('Loading progress with token:', token);
-        try {
-            const response = await fetch('/api/progress', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            console.log('Progress response status:', response.status);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Progress data:', data);
-                State.userProgress = data.progress || {};
-                State.points = data.points || 0;
-                State.streak = data.streak || 0;
-                State.achievements = data.achievements || [];
-                State.badges = data.badges || [];
-            } else {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Error loading progress:', error);
-            UI.showToast('Ошибка загрузки прогресса. Используется локальный прогресс.', '❌');
-            const saved = localStorage.getItem('userProgress');
-            State.userProgress = saved ? JSON.parse(saved) : {};
-            State.points = parseInt(localStorage.getItem('points')) || 0;
-            State.streak = parseInt(localStorage.getItem('streak')) || 0;
-            State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
-            State.badges = JSON.parse(localStorage.getItem('badges')) || [];
-        }
-    } else {
-        console.log('No auth, loading local progress');
-        const saved = localStorage.getItem('userProgress');
-        State.userProgress = saved ? JSON.parse(saved) : {};
-        State.points = parseInt(localStorage.getItem('points')) || 0;
-        State.streak = parseInt(localStorage.getItem('streak')) || 0;
-        State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
-        State.badges = JSON.parse(localStorage.getItem('badges')) || [];
+function loadProgress() {
+    try {
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        const saved = storage.getItem('userProgress');
+        if (saved) return JSON.parse(saved);
+    } catch (error) {
+        console.error('Error loading progress:', error);
+        UI.showToast('Ошибка загрузки прогресса. Данные могут быть недоступны.', '❌');
     }
-    UI.updateProgressDisplay();
+    const progress = {};
+    Data.course.lessons.forEach(lesson => {
+        progress[lesson.id] = { status: 'not-started', completed: false, quizCompleted: false, quizScore: 0 };
+    });
+    return progress;
 }
 
 function loadStats() {
@@ -338,52 +257,31 @@ function loadProfile() {
     }
 }
 
-async function saveProgress() {
-    if (isAuthenticated()) {
-        const token = localStorage.getItem('token');
-        const data = {
-            progress: State.userProgress,
-            points: State.points,
-            streak: State.streak,
-            achievements: State.achievements,
-            badges: State.badges
-        };
-        try {
-            console.log('Saving progress:', data);
-            const response = await fetch('/api/progress', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(data)
-            });
-            if (response.ok) {
-                UI.showToast('Прогресс сохранён', '✅');
-            } else {
-                const errorData = await response.json();
-                UI.showToast(errorData.error || 'Ошибка сохранения прогресса', '❌');
-                if (response.status === 401) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('login');
-                    window.location.href = 'login.html';
-                }
-            }
-        } catch (error) {
-            console.error('Error saving progress:', error);
-            UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
-        }
-    } else {
-        localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
-        localStorage.setItem('points', State.points);
-        localStorage.setItem('streak', State.streak);
-        localStorage.setItem('achievements', JSON.stringify(State.achievements));
-        localStorage.setItem('badges', JSON.stringify(State.badges));
-        UI.showToast('Прогресс сохранён локально', '✅');
+function saveProgress() {
+    try {
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        storage.setItem('userProgress', JSON.stringify(State.userProgress));
+        UI.updateProgressDisplay();
+        UI.checkAchievements();
+        UI.checkBadges();
+        UI.showToast('Прогресс сохранён', '✅');
+    } catch (error) {
+        console.error('Error saving progress:', error);
+        UI.showToast('Ошибка сохранения прогресса.', '❌');
     }
-    UI.updateProgressDisplay();
-    UI.checkAchievements();
-    UI.checkBadges();
+}
+
+function loadStats() {
+    try {
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        const saved = storage.getItem('userStats');
+        if (saved) return JSON.parse(saved);
+        return { points: 0, streak: 0, lastActiveDate: null, achievements: [], badges: [] };
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        UI.showToast('Ошибка загрузки статистики. Используется стандартный профиль.', '❌');
+        return { points: 0, streak: 0, lastActiveDate: null, achievements: [], badges: [] };
+    }
 }
 
 function saveProfile() {
@@ -400,12 +298,14 @@ function saveProfile() {
 /** UI Module */
 const UI = {
     Notifications: {
-        shownNotifications: new Set(),
+        shownNotifications: new Set(), // Храним показанные уведомления в памяти
+
         showProgressMovedNotification() {
             if (this.shownNotifications.has('progressMovedNotification')) {
                 console.log('Notification already shown');
                 return;
             }
+
             const notification = document.getElementById('progress-moved-notification');
             if (notification) {
                 notification.style.display = 'flex';
@@ -413,6 +313,7 @@ const UI = {
                 Analytics.trackEvent('notification_shown', { type: 'progress_moved' });
             }
         },
+
         closeNotification(id) {
             const notification = document.getElementById(id);
             if (notification) {
@@ -428,7 +329,7 @@ const UI = {
         modal.style.display = 'flex';
         modal.setAttribute('aria-hidden', 'false');
         const closeBtn = document.getElementById('notification-close-btn');
-        closeBtn.focus();
+        closeBtn.focus(); // Фокус для доступности
         Analytics.trackEvent('notification_shown', { message });
     },
 
@@ -437,7 +338,6 @@ const UI = {
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
     },
-
     updateProgressDisplay() {
         const totalLessons = Data.course.lessons.length;
         const completedLessons = Data.course.lessons.filter(lesson => State.userProgress[lesson.id]?.completed).length;
@@ -446,67 +346,57 @@ const UI = {
         Utils.animateProgressCircle(progressPercentage);
         DOM.elements.progressText.textContent = `${progressPercentage}%`;
         DOM.elements.completedLessons.textContent = completedLessons;
-        DOM.elements.userPoints.textContent = State.points;
-        DOM.elements.userStreak.textContent = `${State.streak} дней`;
+        DOM.elements.userPoints.textContent = State.userStats.points;
+        DOM.elements.userStreak.textContent = `${State.userStats.streak} дней`;
     },
-
     updateStatsDisplay() {
-        DOM.elements.pointsText.textContent = `Очки: ${State.points} 🏆`;
-        DOM.elements.streakCount.textContent = `Серия: ${State.streak} дней 🔥`;
+        DOM.elements.pointsText.textContent = `Очки: ${State.userStats.points} 🏆`;
+        DOM.elements.streakCount.textContent = `Серия: ${State.userStats.streak} дней 🔥`;
         const today = new Date().toISOString().split('T')[0];
-        DOM.elements.dailyGoalText.textContent = State.lastActiveDate === today
+        DOM.elements.dailyGoalText.textContent = State.userStats.lastActiveDate === today
             ? 'Цель выполнена! 🎉'
             : 'Пройдите 1 урок для серии!';
     },
-
     updateProfileDisplay() {
         DOM.elements.userNameInput.value = State.userProfile.name;
         DOM.elements.userAvatar.src = State.userProfile.avatar;
-        DOM.elements.userPointsProfile.textContent = State.points;
-        DOM.elements.userStreakProfile.textContent = `${State.streak} дней`;
-
-        // Показываем кнопки в зависимости от статуса авторизации
-        if (isAuthenticated()) {
-            if (DOM.elements.loginButton) DOM.elements.loginButton.style.display = 'none';
-            if (DOM.elements.registerButton) DOM.elements.registerButton.style.display = 'none';
-            if (DOM.elements.logoutButton) DOM.elements.logoutButton.style.display = 'block';
-        } else {
-            if (DOM.elements.loginButton) DOM.elements.loginButton.style.display = 'block';
-            if (DOM.elements.registerButton) DOM.elements.registerButton.style.display = 'block';
-            if (DOM.elements.logoutButton) DOM.elements.logoutButton.style.display = 'none';
-        }
+        DOM.elements.userPointsProfile.textContent = State.userStats.points;
+        DOM.elements.userStreakProfile.textContent = `${State.userStats.streak} дней`;
     },
-
     updateStreak() {
         const today = new Date().toISOString().split('T')[0];
         const yesterday = new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0];
 
-        if (State.lastActiveDate !== today) {
-            State.streak = State.lastActiveDate === yesterday
-                ? State.streak + 1
+        if (State.userStats.lastActiveDate !== today) {
+            State.userStats.streak = State.userStats.lastActiveDate === yesterday
+                ? State.userStats.streak + 1
                 : 1;
-            State.lastActiveDate = today;
+            State.userStats.lastActiveDate = today;
             saveStats();
             UI.checkAchievements();
         }
     },
-
     renderLessons() {
         const availableLessonsContainer = document.getElementById('available-lessons');
         const completedLessonsContainer = document.getElementById('completed-lessons-list');
 
+        // Показываем индикатор загрузки
         this.showLoading(availableLessonsContainer);
         this.showLoading(completedLessonsContainer);
 
+        // Очищаем контейнеры
         availableLessonsContainer.innerHTML = '';
         completedLessonsContainer.innerHTML = '';
 
+        // Фильтруем уроки
         const availableLessons = Data.course.lessons.filter(lesson => !State.userProgress[lesson.id]?.completed);
         const completedLessons = Data.course.lessons.filter(lesson => State.userProgress[lesson.id]?.completed);
 
+        // Логи для отладки
         console.log('Available lessons:', availableLessons.length);
         console.log('Completed lessons:', completedLessons.length);
 
+        // Функция для рендеринга одного урока
         function renderLesson(lesson, container) {
             const progress = State.userProgress[lesson.id] || { status: 'not-started' };
             const lessonCard = document.createElement('div');
@@ -528,6 +418,7 @@ const UI = {
             container.appendChild(lessonCard);
         }
 
+        // Функция для создания кнопки "Ещё..."
         function createShowMoreButton(id, label, lessons, container, initialCount) {
             const button = document.createElement('button');
             button.className = 'btn outline-btn show-more-btn pulse';
@@ -537,9 +428,12 @@ const UI = {
             button.setAttribute('type', 'button');
             button.setAttribute('role', 'button');
             button.onclick = () => {
+                // Рендерим оставшиеся уроки
                 lessons.slice(initialCount).forEach(lesson => renderLesson(lesson, container));
+                // Удаляем кнопку
                 const buttonContainer = container.querySelector('.show-more-container');
                 if (buttonContainer) buttonContainer.remove();
+                // Показываем уведомление, если больше нет уроков
                 if (lessons.length >= Data.course.totalLessons) {
                     UI.showNotification('Уроков больше нет, новые появятся скоро!');
                 }
@@ -548,12 +442,14 @@ const UI = {
             return button;
         }
 
+        // Рендеринг доступных уроков
         if (availableLessons.length === 0) {
             availableLessonsContainer.innerHTML = '<p class="no-lessons-message">Нет доступных уроков. Новые уроки скоро 😉!</p>';
         } else {
             const initialAvailableCount = Math.min(5, availableLessons.length);
             availableLessons.slice(0, initialAvailableCount).forEach(lesson => renderLesson(lesson, availableLessonsContainer));
 
+            // Добавляем кнопку "Ещё" для доступных уроков, если их больше 5
             if (availableLessons.length > initialAvailableCount) {
                 const availableShowMoreBtn = createShowMoreButton(
                     'show-more-available-btn',
@@ -569,12 +465,14 @@ const UI = {
             }
         }
 
+        // Рендеринг пройденных уроков
         if (completedLessons.length === 0) {
             completedLessonsContainer.innerHTML = '<p class="no-lessons-message">Нет пройденных уроков. Начните обучение!</p>';
         } else {
             const initialCompletedCount = Math.min(5, completedLessons.length);
             completedLessons.slice(0, initialCompletedCount).forEach(lesson => renderLesson(lesson, completedLessonsContainer));
 
+            // Добавляем кнопку "Ещё" для пройденных уроков, если их больше 5
             if (completedLessons.length > initialCompletedCount) {
                 const completedShowMoreBtn = createShowMoreButton(
                     'show-more-completed-btn',
@@ -590,14 +488,14 @@ const UI = {
             }
         }
 
+        // Убираем индикатор загрузки
         this.hideLoading(availableLessonsContainer);
         this.hideLoading(completedLessonsContainer);
     },
-
     renderAchievements() {
         DOM.elements.achievementsContainer.innerHTML = '';
         Data.achievements.forEach(achievement => {
-            const isUnlocked = State.achievements.includes(achievement.id);
+            const isUnlocked = State.userStats.achievements.includes(achievement.id);
             const card = document.createElement('div');
             card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
             card.setAttribute('role', 'listitem');
@@ -609,11 +507,10 @@ const UI = {
             DOM.elements.achievementsContainer.appendChild(card);
         });
     },
-
     renderBadges() {
         DOM.elements.badgesContainer.innerHTML = '';
         Data.badges.forEach(badge => {
-            const isUnlocked = State.badges.includes(badge.id);
+            const isUnlocked = State.userStats.badges.includes(badge.id);
             const card = document.createElement('div');
             card.className = `badge-card ${isUnlocked ? 'unlocked' : 'locked'}`;
             card.setAttribute('role', 'listitem');
@@ -625,7 +522,6 @@ const UI = {
             DOM.elements.badgesContainer.appendChild(card);
         });
     },
-
     renderLeaderboard() {
         DOM.elements.leaderboardContainer.innerHTML = '';
         if (Data.leaderboard.length === 0) {
@@ -650,7 +546,6 @@ const UI = {
             DOM.elements.leaderboardContainer.appendChild(item);
         });
     },
-
     renderQuiz(lessonId) {
         const lesson = Data.course.lessons.find(l => l.id === lessonId);
         if (!lesson || !lesson.quiz) return;
@@ -679,26 +574,28 @@ const UI = {
         DOM.elements.quizResult.textContent = '';
         DOM.elements.submitQuizBtn.onclick = () => UI.checkQuiz(lessonId);
     },
-
     showLessonPreview(lessonId) {
         Utils.closeMenu();
         const lesson = Data.course.lessons.find(l => l.id === lessonId);
         if (!lesson) return;
-
+    
         DOM.elements.previewTitle.textContent = lesson.title;
         DOM.elements.previewDescription.textContent = lesson.description;
         DOM.elements.lessonPreviewModal.style.display = 'flex';
         DOM.elements.lessonPreviewModal.focus();
-
+    
+        // Обработчик для кнопки "Начать урок"
         DOM.elements.startLessonBtn.onclick = () => {
             DOM.elements.lessonPreviewModal.style.display = 'none';
             UI.openLesson(lessonId);
         };
-
+    
+        // Обработчик для кнопки закрытия ("крестик")
         DOM.elements.closeModalBtn.onclick = () => {
             DOM.elements.lessonPreviewModal.style.display = 'none';
         };
-
+    
+        // Обработчик для клавиши Escape
         const handleEscape = (e) => {
             if (e.key === 'Escape') {
                 DOM.elements.lessonPreviewModal.style.display = 'none';
@@ -707,7 +604,6 @@ const UI = {
         };
         DOM.elements.lessonPreviewModal.addEventListener('keydown', handleEscape);
     },
-
     openLesson(lessonId) {
         Utils.closeMenu();
         State.currentLessonId = lessonId;
@@ -718,6 +614,7 @@ const UI = {
             State.userProgress[lessonId] = { status: 'in-progress', completed: false, quizCompleted: false, quizScore: 0 };
             UI.updateStreak();
             saveProgress();
+            // Log lesson started activity
             Activity.logActivity(Activity.activityTypes.LESSON_STARTED, { lessonId });
         }
 
@@ -741,37 +638,38 @@ const UI = {
             DOM.elements.nextBtn.style.display = 'none';
         };
     },
-
     checkQuiz(lessonId) {
         const lesson = Data.course.lessons.find(l => l.id === lessonId);
         if (!lesson || !lesson.quiz) return;
-
+    
         let correctAnswers = 0;
         const totalQuestions = lesson.quiz.length;
         let allAnswered = true;
-
+    
         lesson.quiz.forEach((q, index) => {
             const selected = document.querySelector(`input[name="question-${index}"]:checked`);
             if (!selected) allAnswered = false;
             if (selected && parseInt(selected.value) === q.correctAnswer) correctAnswers++;
         });
-
+    
         if (!allAnswered) {
             DOM.elements.quizResult.className = 'result-container error';
             DOM.elements.quizResult.textContent = 'Пожалуйста, ответьте на все вопросы!';
             DOM.elements.quizResult.style.display = 'block';
             return;
         }
-
+    
         const score = Math.round((correctAnswers / totalQuestions) * 100);
         State.userProgress[lessonId].quizCompleted = true;
         State.userProgress[lessonId].quizScore = score;
-
+    
+        // Log quiz completion activity
         Activity.logActivity(Activity.activityTypes.QUIZ_COMPLETED, { lessonId, score });
-
+    
         if (score >= 70) {
             State.userProgress[lessonId].completed = true;
-            State.points += 50;
+            State.userStats.points += 50;
+            // Log lesson completion activity
             Activity.logActivity(Activity.activityTypes.LESSON_COMPLETED, { lessonId });
             DOM.elements.quizResult.className = 'result-container success';
             DOM.elements.quizResult.textContent = `Поздравляем! ${correctAnswers}/${totalQuestions} (${score}%). Урок завершен!`;
@@ -784,36 +682,35 @@ const UI = {
             DOM.elements.quizResult.className = 'result-container error';
             DOM.elements.quizResult.textContent = `${correctAnswers}/${totalQuestions} (${score}%). Нужно 70%+. Попробуйте снова!`;
         }
-
+    
         DOM.elements.quizResult.style.display = 'block';
         DOM.elements.nextBtn.style.display = 'none';
     },
-
     checkAchievements() {
         Data.achievements.forEach(achievement => {
-            if (!State.achievements.includes(achievement.id) && achievement.condition(State.userProgress, State)) {
-                State.achievements.push(achievement.id);
+            if (!State.userStats.achievements.includes(achievement.id) && achievement.condition(State.userProgress, State.userStats)) {
+                State.userStats.achievements.push(achievement.id);
+                // Log achievement unlock activity
                 Activity.logActivity(Activity.activityTypes.ACHIEVEMENT_UNLOCKED, { achievementId: achievement.id });
                 UI.showToast(`Достижение: ${achievement.title}!`, achievement.icon);
                 UI.triggerConfetti();
-                saveProgress();
+                saveStats();
             }
         });
     },
-
     checkBadges() {
         Data.badges.forEach(badge => {
-            if (!State.badges.includes(badge.id) && badge.condition(State.userProgress, State)) {
-                State.badges.push(badge.id);
-                State.points += badge.points;
+            if (!State.userStats.badges.includes(badge.id) && badge.condition(State.userProgress, State.userStats)) {
+                State.userStats.badges.push(badge.id);
+                State.userStats.points += badge.points;
+                // Log badge earned activity
                 Activity.logActivity(Activity.activityTypes.BADGE_EARNED, { badgeId: badge.id });
                 UI.showToast(`Награда: ${badge.title}!`, badge.icon);
                 UI.triggerConfetti();
-                saveProgress();
+                saveStats();
             }
         });
     },
-
     showToast(message, icon) {
         const toast = document.createElement('div');
         toast.className = 'toast success';
@@ -823,13 +720,12 @@ const UI = {
         setTimeout(() => {
             toast.style.opacity = '1';
             toast.style.transition = 'opacity 0.3s';
-        }, 10);
+        }, 10); // Небольшая задержка для начала анимации
         setTimeout(() => {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 300);
         }, 4000);
     },
-
     triggerConfetti() {
         confetti({
             particleCount: 100,
@@ -838,7 +734,6 @@ const UI = {
             disableForReducedMotion: true
         });
     },
-
     playSuccessSound() {
         if ('Audio' in window) {
             const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3');
@@ -851,7 +746,6 @@ const UI = {
             UI.showToast('Звук не поддерживается в этом браузере.', '⚠️');
         }
     },
-
     showPage(page) {
         Utils.closeMenu();
         DOM.elements.homePage.style.display = page === 'home' ? 'block' : 'none';
@@ -861,25 +755,17 @@ const UI = {
         document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
         DOM.elements[`${page}-link`]?.setAttribute('aria-current', 'page');
         DOM.elements[`mobile-${page}-link`]?.setAttribute('aria-current', 'page');
-
+    
         if (page === 'profile') {
             try {
                 Activity.renderActivities();
                 UI.updateProfileDisplay();
             } catch (error) {
-                console.error('Error rendering profile page:', error);
-                UI.showToast('Ошибка отображения профиля.', '❌');
-            }
-        } else if (page === 'achievements') {
-            try {
-                UI.renderAchievements();
-            } catch (error) {
-                console.error('Error rendering achievements page:', error);
-                UI.showToast('Ошибка отображения достижений.', '❌');
+                console.error('Error rendering activities on profile page:', error);
+                UI.showToast('Ошибка отображения активности на странице профиля.', '❌');
             }
         }
     },
-
     toggleTheme() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
@@ -887,14 +773,12 @@ const UI = {
         const storage = storageAvailable ? localStorage : MemoryStorage;
         storage.setItem('theme', isDark ? 'dark' : 'light');
     },
-
     toggleContrast() {
         document.body.classList.toggle('high-contrast');
         const isHighContrast = document.body.classList.contains('high-contrast');
         const storage = storageAvailable ? localStorage : MemoryStorage;
         storage.setItem('contrast', isHighContrast ? 'high' : 'normal');
     },
-
     toggleMenu() {
         State.isMenuOpen = !State.isMenuOpen;
         DOM.elements.navMenu.classList.toggle('active', State.isMenuOpen);
@@ -909,6 +793,22 @@ const UI = {
         } else {
             DOM.elements.hamburger.focus();
         }
+    },
+    showNotification(message) {
+        const modal = document.getElementById('notification-modal');
+        const modalMessage = document.getElementById('notification-message');
+        modalMessage.textContent = message;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        const closeBtn = document.getElementById('notification-close-btn');
+        closeBtn.focus(); // Фокус для доступности
+        Analytics.trackEvent('notification_shown', { message });
+    },
+
+    hideNotification() {
+        const modal = document.getElementById('notification-modal');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
     },
 
     showLoading(container) {
@@ -928,99 +828,388 @@ const UI = {
         if (availableLessons.length === 0) {
             this.showNotification('Уроков больше нет, новые появятся скоро!');
         } else {
+            // Открываем первый доступный урок
             const firstAvailableLesson = availableLessons[0];
             this.showLessonPreview(firstAvailableLesson.id);
             Analytics.trackEvent('continue_learning_clicked', { lessonId: firstAvailableLesson.id });
         }
-    },
-
-    logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('login');
-        State.login = null;
-        State.userProgress = {};
-        State.points = 0;
-        State.streak = 0;
-        State.achievements = [];
-        State.badges = [];
-        UI.updateProfileDisplay();
-        UI.showToast('Вы вышли из аккаунта', '✅');
-        window.location.href = 'login.html';
     }
 };
 
 // Обработчик события для navOverlay
 DOM.elements.navOverlay.addEventListener('click', () => {
     if (State.isMenuOpen) {
-        UI.toggleMenu();
+        UI.toggleMenu(); // Вызываем метод toggleMenu в контексте объекта UI
     }
 });
-
-loadUserData();
-loadProgress();
 
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('notification-close-btn');
     if (closeBtn) {
-        closeBtn.add-determinedEventListener('click', () => UI.hideNotification());
+        closeBtn.addEventListener('click', () => UI.hideNotification());
     }
 
     const continueBtn = document.getElementById('continue-learning-btn');
     if (continueBtn) {
         continueBtn.addEventListener('click', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Предотвращаем действие ссылки
             UI.continueLearning();
-        });
-    }
-
-    // Обработчики для кнопок на странице профиля
-    if (DOM.elements.loginButton) {
-        DOM.elements.loginButton.addEventListener('click', () => {
-            window.location.href = 'login.html';
-        });
-    }
-    if (DOM.elements.registerButton) {
-        DOM.elements.registerButton.addEventListener('click', () => {
-            window.location.href = 'register.html';
-        });
-    }
-    if (DOM.elements.logoutButton) {
-        DOM.elements.logoutButton.addEventListener('click', () => {
-            UI.logout();
         });
     }
 });
 
 /** Initialization */
 function init() {
-    if (DOM.elements.homePage) {
+    try {
+        // Инициализация UI
         UI.renderLessons();
+        UI.renderAchievements();
+        UI.renderBadges();
+        UI.renderLeaderboard();
         UI.updateProgressDisplay();
-    }
-    if (DOM.elements.profilePage) {
+        UI.updateStatsDisplay();
         UI.updateProfileDisplay();
-        Activity.renderActivities();
-    }
-    if (DOM.elements.achievementsPage) {
-        Achievements.renderAchievements();
-        Achievements.renderBadges();
-    }
-    loadUserData();
-    loadProgress();
 
-    if (DOM.elements.loginButton) {
-        DOM.elements.loginButton.addEventListener('click', () => {
-            window.location.href = '/login.html';
+        // Используем MemoryStorage для theme и contrast
+        const storage = storageAvailable ? localStorage : MemoryStorage;
+        if (storage.getItem('theme') === 'dark') {
+            console.log('Applying dark theme');
+            UI.toggleTheme();
+        }
+        if (storage.getItem('contrast') === 'high') {
+            console.log('Applying high contrast');
+            UI.toggleContrast();
+        }
+
+        // Показываем уведомление без cookies
+        UI.Notifications.showProgressMovedNotification();
+
+        // Добавляем универсальную функцию для обработчиков
+        const addClickHandler = (element, handler, eventName) => {
+            if (element) {
+                element.addEventListener('click', (e) => {
+                    try {
+                        console.log(`${eventName} clicked`);
+                        handler(e);
+                    } catch (error) {
+                        console.error(`Error in ${eventName} handler:`, error);
+                        UI.showToast(`Ошибка в ${eventName}. Проверьте консоль для деталей.`, '❌');
+                    }
+                });
+            } else {
+                console.warn(`Element for ${eventName} not found`);
+            }
+        };
+
+        // Обработчики для навигации
+        addClickHandler(DOM.elements.backBtn, () => {
+            UI.showPage('home');
+        }, 'backBtn');
+
+        addClickHandler(DOM.elements.startLearningBtn, (e) => {
+            e.preventDefault();
+            if (Data.course.lessons.length > 0) UI.showLessonPreview(Data.course.lessons[0].id);
+            Analytics.trackEvent('start_learning_clicked');
+        }, 'startLearningBtn');
+
+        addClickHandler(DOM.elements.continueLearningBtn, (e) => {
+            e.preventDefault();
+            const nextLesson = Data.course.lessons.find(lesson => !State.userProgress[lesson.id]?.completed);
+            if (nextLesson) UI.showLessonPreview(nextLesson.id);
+            Analytics.trackEvent('continue_learning_clicked');
+        }, 'continueLearningBtn');
+
+        addClickHandler(DOM.elements.homeLink, (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('nav_home_clicked');
+        }, 'homeLink');
+
+        addClickHandler(DOM.elements.achievementsLink, (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('nav_achievements_clicked');
+        }, 'achievementsLink');
+
+        addClickHandler(DOM.elements.profileLink, (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('nav_profile_clicked');
+        }, 'profileLink');
+
+        addClickHandler(DOM.elements.mobileHomeLink, (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('mobile_nav_home_clicked');
+        }, 'mobileHomeLink');
+
+        addClickHandler(DOM.elements.mobileAchievementsLink, (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('mobile_nav_achievements_clicked');
+        }, 'mobileAchievementsLink');
+
+        addClickHandler(DOM.elements.mobileProfileLink, (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('mobile_nav_profile_clicked');
+        }, 'mobileProfileLink');
+
+        // Обработчики для профиля
+        addClickHandler(DOM.elements.changeAvatarBtn, () => {
+            const newAvatar = prompt('Введите URL аватара:', State.userProfile.avatar);
+            if (!newAvatar || !Utils.validateUrl(newAvatar)) {
+                if (newAvatar) UI.showToast('Неверный URL аватара!', '❌');
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => {
+                State.userProfile.avatar = newAvatar;
+                saveProfile();
+                Analytics.trackEvent('avatar_changed');
+                UI.showToast('Аватар успешно обновлен!', '✅');
+            };
+            img.onerror = () => {
+                UI.showToast('Не удалось загрузить изображение!', '❌');
+            };
+            img.src = newAvatar;
+        }, 'changeAvatarBtn');
+
+        addClickHandler(DOM.elements.saveProfileBtn, () => {
+            const newName = Utils.sanitizeInput(DOM.elements.userNameInput.value.trim());
+            if (newName && newName.length <= 20) {
+                State.userProfile.name = newName || 'Пользователь';
+                State.userProfile.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}`;
+                saveProfile();
+                Activity.logActivity(Activity.activityTypes.PROFILE_UPDATED);
+                UI.showToast('Профиль сохранен!', '✅');
+                Analytics.trackEvent('profile_saved');
+            } else {
+                UI.showToast('Имя слишком длинное или пустое!', '❌');
+            }
+        }, 'saveProfileBtn');
+
+        // Обработчики для темы и контрастности
+        addClickHandler(DOM.elements.themeToggle, () => {
+            UI.toggleTheme();
+        }, 'themeToggle');
+
+        addClickHandler(DOM.elements.contrastToggle, () => {
+            UI.toggleContrast();
+        }, 'contrastToggle');
+
+        // Обработчики для меню
+        addClickHandler(DOM.elements.hamburger, () => {
+            UI.toggleMenu();
+        }, 'hamburger');
+
+        addClickHandler(DOM.elements.navOverlay, () => {
+            Utils.closeMenu();
+        }, 'navOverlay');
+
+        // Обработчик для закрытия модального окна
+        addClickHandler(DOM.elements.closeModalBtn, () => {
+            DOM.elements.lessonPreviewModal.style.display = 'none';
+        }, 'closeModalBtn');
+
+        // Обработчик для шаринга достижений
+        addClickHandler(DOM.elements.shareAchievements, () => {
+            const text = `Я набрал ${State.userStats.points} очков в обучении кибербезопасности! 🚀`;
+            if ('share' in navigator && typeof navigator.share === 'function') {
+                navigator.share({ title: 'Мои достижения', text, url: window.location.href })
+                    .then(() => {
+                        Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+                    })
+                    .catch(error => {
+                        console.warn('Share error:', error);
+                        // Фолбэк: копирование в буфер обмена
+                        if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                            navigator.clipboard.writeText(text)
+                                .then(() => {
+                                    UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                                })
+                                .catch(err => {
+                                    console.error('Clipboard copy failed:', err);
+                                    UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                                });
+                        } else {
+                            prompt('Скопируйте текст для публикации:', text);
+                        }
+                    });
+            } else {
+                // Фолбэк: копирование в буфер обмена
+                if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                        })
+                        .catch(err => {
+                            console.error('Clipboard copy failed:', err);
+                            UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                        });
+                } else {
+                    prompt('Скопируйте текст для публикации:', text);
+                }
+                Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+            }
+            Analytics.trackEvent('achievements_shared');
+        }, 'shareAchievements');
+
+        DOM.elements.backBtn.addEventListener('click', () => UI.showPage('home'));
+        DOM.elements.startLearningBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (Data.course.lessons.length > 0) UI.showLessonPreview(Data.course.lessons[0].id);
+            Analytics.trackEvent('start_learning_clicked');
         });
-    }
-    if (DOM.elements.registerButton) {
-        DOM.elements.registerButton.addEventListener('click', () => {
-            window.location.href = '/register.html';
+        DOM.elements.continueLearningBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const nextLesson = Data.course.lessons.find(lesson => !State.userProgress[lesson.id]?.completed);
+            if (nextLesson) UI.showLessonPreview(nextLesson.id);
+            Analytics.trackEvent('continue_learning_clicked');
         });
-    }
-    if (DOM.elements.logoutButton) {
-        DOM.elements.logoutButton.addEventListener('click', UI.logout);
+        DOM.elements.homeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('nav_home_clicked');
+        });
+        DOM.elements.achievementsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('nav_achievements_clicked');
+        });
+        DOM.elements.profileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('nav_profile_clicked');
+        });
+        DOM.elements.mobileHomeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('home');
+            Analytics.trackEvent('mobile_nav_home_clicked');
+        });
+        DOM.elements.mobileAchievementsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('achievements');
+            Analytics.trackEvent('mobile_nav_achievements_clicked');
+        });
+        DOM.elements.mobileProfileLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            UI.showPage('profile');
+            Analytics.trackEvent('mobile_nav_profile_clicked');
+        });
+        DOM.elements.changeAvatarBtn.addEventListener('click', () => {
+            const newAvatar = prompt('Введите URL аватара:', State.userProfile.avatar);
+            if (!newAvatar || !Utils.validateUrl(newAvatar)) {
+                if (newAvatar) UI.showToast('Неверный URL аватара!', '❌');
+                return;
+            }
+        
+            const img = new Image();
+            img.onload = () => {
+                State.userProfile.avatar = newAvatar;
+                saveProfile();
+                Analytics.trackEvent('avatar_changed');
+                UI.showToast('Аватар успешно обновлен!', '✅');
+            };
+            img.onerror = () => {
+                UI.showToast('Не удалось загрузить изображение!', '❌');
+            };
+            img.src = newAvatar;
+        });
+        DOM.elements.saveProfileBtn.addEventListener('click', () => {
+            const newName = Utils.sanitizeInput(DOM.elements.userNameInput.value.trim());
+            if (newName && newName.length <= 20) {
+                State.userProfile.name = newName || 'Пользователь';
+                State.userProfile.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}`;
+                saveProfile();
+                // Log profile update activity
+                Activity.logActivity(Activity.activityTypes.PROFILE_UPDATED);
+                UI.showToast('Профиль сохранен!', '✅');
+                Analytics.trackEvent('profile_saved');
+            } else {
+                UI.showToast('Имя слишком длинное или пустое!', '❌');
+            }
+        });
+        DOM.elements.themeToggle.addEventListener('click', UI.toggleTheme);
+        DOM.elements.contrastToggle.addEventListener('click', UI.toggleContrast);
+        DOM.elements.hamburger.addEventListener('click', UI.toggleMenu);
+        DOM.elements.navOverlay.addEventListener('click', Utils.closeMenu);
+        DOM.elements.navMenu.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => Utils.closeMenu());
+        });
+        DOM.elements.closeModalBtn.addEventListener('click', () => {
+            DOM.elements.lessonPreviewModal.style.display = 'none';
+        });
+        DOM.elements.shareAchievements.addEventListener('click', () => {
+            const text = `Я набрал ${State.userStats.points} очков в обучении кибербезопасности! 🚀`;
+            if ('share' in navigator && typeof navigator.share === 'function') {
+                navigator.share({ title: 'Мои достижения', text, url: window.location.href })
+                    .then(() => {
+                        Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+                    })
+                    .catch(error => {
+                        console.warn('Share error:', error);
+                        // Фолбэк: копирование в буфер обмена
+                        if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                            navigator.clipboard.writeText(text)
+                                .then(() => {
+                                    UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                                })
+                                .catch(err => {
+                                    console.error('Clipboard copy failed:', err);
+                                    UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                                });
+                        } else {
+                            prompt('Скопируйте текст для публикации:', text);
+                        }
+                    });
+            } else {
+                // Фолбэк: копирование в буфер обмена
+                if ('clipboard' in navigator && typeof navigator.clipboard.writeText === 'function') {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            UI.showToast('Текст скопирован в буфер обмена!', '📋');
+                        })
+                        .catch(err => {
+                            console.error('Clipboard copy failed:', err);
+                            UI.showToast('Не удалось поделиться. Скопируйте текст вручную.', '❌');
+                        });
+                } else {
+                    prompt('Скопируйте текст для публикации:', text);
+                }
+                Activity.logActivity(Activity.activityTypes.COURSE_SHARED);
+            }
+            Analytics.trackEvent('achievements_shared');
+        });
+        DOM.elements.lessonPreviewModal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') DOM.elements.lessonPreviewModal.style.display = 'none';
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && State.isMenuOpen) {
+                Utils.closeMenu();
+            }
+        });
+
+        DOM.elements.userNameInput.addEventListener('input', Utils.debounce(() => {
+            const newName = DOM.elements.userNameInput.value.trim();
+           
+
+ if (newName.length > 20) {
+                UI.showToast('Имя не должно превышать 20 символов!', '❌');
+            }
+        }, 500));
+
+        DOM.elements.navMenu.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && State.isMenuOpen) {
+                Utils.closeMenu();
+            }
+        });
+    } catch (error) {
+        console.error('Initialization error:', error);
     }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+init();
+window.saveProgress = saveProgress;
