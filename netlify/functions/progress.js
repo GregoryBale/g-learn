@@ -2,6 +2,8 @@ const { db } = require('./db');
 const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
+    console.log('Progress request:', event); // Для отладки
+
     const token = event.headers.authorization?.split(' ')[1];
     if (!token) {
         return {
@@ -32,13 +34,24 @@ exports.handler = async (event) => {
                 body: JSON.stringify({
                     progress: progress?.progress || {},
                     points: stats?.points || 0,
-                    streak: stats?.streak || 0,
+                    streak: stats?.streak || 0 | 0,
                     achievements: stats?.achievements || [],
                     badges: stats?.badges || []
                 })
             };
         } else if (event.httpMethod === 'POST') {
+            if (!event.body) {
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({ error: 'Отсутствует тело запроса' })
+                };
+            }
             const data = JSON.parse(event.body);
+            console.log('Saving progress:', data); // Для отладки
             await db('user_progress')
                 .insert({ user_id: userId, progress: data.progress || {} })
                 .onConflict('user_id')
@@ -48,8 +61,8 @@ exports.handler = async (event) => {
                     user_id: userId,
                     points: data.points || 0,
                     streak: data.streak || 0,
-                    achievements: data.achievements || '[]',
-                    badges: data.badges || '[]'
+                    achievements: JSON.stringify(data.achievements || []),
+                    badges: JSON.stringify(data.badges || [])
                 })
                 .onConflict('user_id')
                 .merge();
