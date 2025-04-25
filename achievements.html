@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Достижения - G-LEARN</title>
+    <link rel="stylesheet" href="/source/css/styles.css">
+</head>
+<body>
+    <header>
+        <nav id="nav-menu" aria-hidden="true">
+            <button id="hamburger" aria-expanded="false">☰</button>
+            <div id="nav-overlay"></div>
+            <a href="/index.html" id="home-link" class="nav-link">Главная</a>
+            <a href="/achievements.html" id="achievements-link" class="nav-link">Достижения</a>
+            <a href="/profile.html" id="profile-link" class="nav-link">Профиль</a>
+        </nav>
+        <nav id="mobile-nav">
+            <a href="/index.html" id="mobile-home-link" class="mobile-nav-link">Главная</a>
+            <a href="/achievements.html" id="mobile-achievements-link" class="mobile-nav-link">Достижения</a>
+            <a href="/profile.html" id="mobile-profile-link" class="mobile-nav-link">Профиль</a>
+        </nav>
+    </header>
+
+    <main>
+        <div id="achievements-page">
+            <h2>Достижения</h2>
+            <div id="achievements-container"></div>
+            <p id="no-achievements-message" style="display: none;">Нет достижений. Начните обучение!</p>
+            <div id="badges-container"></div>
+            <p id="no-badges-message" style="display: none;">Нет наград. Продолжайте учиться!</p>
+            <button id="share-achievements">Поделиться достижениями</button>
+        </div>
+
+        <div id="toast-container"></div>
+    </main>
+
+    <footer>
+        <button id="theme-toggle">🌙</button>
+        <button id="contrast-toggle">Контраст</button>
+    </footer>
+
+    <script src="/source/js/script.js"></script>
+    <script src="/source/js/achievements.js"></script>
+</body>
+</html>
