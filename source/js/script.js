@@ -279,14 +279,12 @@ async function loadProgress() {
                 State.streak = data.streak || 0;
                 State.achievements = data.achievements || [];
                 State.badges = data.badges || [];
-                console.log('Loaded progress from server:', data); // Для отладки
                 return State.userProgress;
             } else {
                 const errorData = await response.json();
                 UI.showToast(errorData.error || 'Ошибка загрузки прогресса', '❌');
                 if (response.status === 401) {
                     localStorage.removeItem('token');
-                    localStorage.removeItem('login');
                     window.location.href = 'login.html';
                 }
                 return {};
@@ -296,13 +294,12 @@ async function loadProgress() {
             return {};
         }
     } else {
-        // Для гостей не используем localStorage, возвращаем пустой прогресс
-        State.userProgress = {};
-        State.points = 0;
-        State.streak = 0;
-        State.achievements = [];
-        State.badges = [];
-        UI.showToast('Войдите, чтобы сохранить прогресс', 'ℹ️');
+        const saved = localStorage.getItem('userProgress');
+        State.userProgress = saved ? JSON.parse(saved) : {};
+        State.points = parseInt(localStorage.getItem('points')) || 0;
+        State.streak = parseInt(localStorage.getItem('streak')) || 0;
+        State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+        State.badges = JSON.parse(localStorage.getItem('badges')) || [];
         return State.userProgress;
     }
 }
@@ -341,7 +338,6 @@ async function saveProgress() {
             achievements: State.achievements,
             badges: State.badges
         };
-        console.log('Saving progress to server:', data); // Для отладки
         try {
             const response = await fetch('/api/progress', {
                 method: 'POST',
@@ -358,7 +354,6 @@ async function saveProgress() {
                 UI.showToast(errorData.error || 'Ошибка сохранения прогресса', '❌');
                 if (response.status === 401) {
                     localStorage.removeItem('token');
-                    localStorage.removeItem('login');
                     window.location.href = 'login.html';
                 }
             }
@@ -366,7 +361,12 @@ async function saveProgress() {
             UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
         }
     } else {
-        UI.showToast('Войдите, чтобы сохранить прогресс', 'ℹ️');
+        localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
+        localStorage.setItem('points', State.points);
+        localStorage.setItem('streak', State.streak);
+        localStorage.setItem('achievements', JSON.stringify(State.achievements));
+        localStorage.setItem('badges', JSON.stringify(State.badges));
+        UI.showToast('Прогресс сохранён локально', '✅');
     }
     UI.updateProgressDisplay();
     UI.checkAchievements();
@@ -948,14 +948,6 @@ DOM.elements.navOverlay.addEventListener('click', () => {
 
 loadUserData();
 loadProgress();
-
-document.addEventListener('DOMContentLoaded', () => {
-    loadUserData();
-    loadProgress();
-    if (isAuthenticated() && localStorage.getItem('login')) {
-        UI.showToast(`Вы вошли как ${localStorage.getItem('login')}`, '✅');
-    }
-});
 
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('notification-close-btn');
