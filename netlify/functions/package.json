@@ -2,7 +2,10 @@
   "name": "g-learn-functions",
   "version": "1.0.0",
   "dependencies": {
+    "@neondatabase/serverless": "^0.6.0",
     "pg": "^8.11.3",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "knex": "^3.0.1"
   }
 }
