@@ -2,6 +2,10 @@
  * Cybersecurity Learning Platform
  * Enhanced with modular structure, accessibility, and fixed navigation menu
  */
+function isAuthenticated() {
+    return !!localStorage.getItem('token');
+}
+
 const Analytics = {
     trackEvent(eventName, data) {
         console.log(`Analytics event: ${eventName}`, data);
@@ -123,6 +127,11 @@ const DOM = {
 
 /** State Module */
 const State = {
+    userProgress: {},
+    points: 0,
+    streak: 0,
+    achievements: [],
+    badges: [],
     currentLessonId: null,
     userProgress: loadProgress(),
     userStats: loadStats(),
@@ -217,20 +226,43 @@ const Progress = {
 };
 
 /** Storage Module */
-function loadProgress() {
-    try {
-        const storage = storageAvailable ? localStorage : MemoryStorage;
-        const saved = storage.getItem('userProgress');
-        if (saved) return JSON.parse(saved);
-    } catch (error) {
-        console.error('Error loading progress:', error);
-        UI.showToast('Ошибка загрузки прогресса. Данные могут быть недоступны.', '❌');
+async function loadProgress() {
+    if (isAuthenticated()) {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/progress', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                State.userProgress = data.progress || {};
+                State.points = data.points || 0;
+                State.streak = data.streak || 0;
+                State.achievements = data.achievements || [];
+                State.badges = data.badges || [];
+                return State.userProgress;
+            } else {
+                const errorData = await response.json();
+                UI.showToast(errorData.error || 'Ошибка загрузки прогресса', '❌');
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                }
+                return {};
+            }
+        } catch (error) {
+            UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
+            return {};
+        }
+    } else {
+        const saved = localStorage.getItem('userProgress');
+        State.userProgress = saved ? JSON.parse(saved) : {};
+        State.points = parseInt(localStorage.getItem('points')) || 0;
+        State.streak = parseInt(localStorage.getItem('streak')) || 0;
+        State.achievements = JSON.parse(localStorage.getItem('achievements')) || [];
+        State.badges = JSON.parse(localStorage.getItem('badges')) || [];
+        return State.userProgress;
     }
-    const progress = {};
-    Data.course.lessons.forEach(lesson => {
-        progress[lesson.id] = { status: 'not-started', completed: false, quizCompleted: false, quizScore: 0 };
-    });
-    return progress;
 }
 
 function loadStats() {
@@ -257,18 +289,49 @@ function loadProfile() {
     }
 }
 
-function saveProgress() {
-    try {
-        const storage = storageAvailable ? localStorage : MemoryStorage;
-        storage.setItem('userProgress', JSON.stringify(State.userProgress));
-        UI.updateProgressDisplay();
-        UI.checkAchievements();
-        UI.checkBadges();
-        UI.showToast('Прогресс сохранён', '✅');
-    } catch (error) {
-        console.error('Error saving progress:', error);
-        UI.showToast('Ошибка сохранения прогресса.', '❌');
+async function saveProgress() {
+    if (isAuthenticated()) {
+        const token = localStorage.getItem('token');
+        const data = {
+            progress: State.userProgress,
+            points: State.points,
+            streak: State.streak,
+            achievements: State.achievements,
+            badges: State.badges
+        };
+        try {
+            const response = await fetch('/api/progress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                UI.showToast('Прогресс сохранён', '✅');
+            } else {
+                const errorData = await response.json();
+                UI.showToast(errorData.error || 'Ошибка сохранения прогресса', '❌');
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                }
+            }
+        } catch (error) {
+            UI.showToast('Ошибка подключения к серверу: ' + error.message, '❌');
+        }
+    } else {
+        localStorage.setItem('userProgress', JSON.stringify(State.userProgress));
+        localStorage.setItem('points', State.points);
+        localStorage.setItem('streak', State.streak);
+        localStorage.setItem('achievements', JSON.stringify(State.achievements));
+        localStorage.setItem('badges', JSON.stringify(State.badges));
+        UI.showToast('Прогресс сохранён локально', '✅');
     }
+    UI.updateProgressDisplay();
+    UI.checkAchievements();
+    UI.checkBadges();
 }
 
 function loadStats() {
@@ -1212,3 +1275,4 @@ function init() {
 }
 
 init();
+window.saveProgress = saveProgress;
