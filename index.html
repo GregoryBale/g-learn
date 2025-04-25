@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/source/css/styles.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.0.3/src/bold/style.css">
     <link rel="icon" href="/source/images/favicon.ico" type="image/x-icon">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
@@ -46,17 +46,17 @@
                 <i class="ph ph-shield-check"></i>
                 <span>G-LEARN</span>
             </a>
-            <a href="#home" class="nav-link" id="home-link" aria-current="page">
+            <a href="index.html" class="nav-link" id="home-link" aria-current="page">
                 <i class="ph ph-house"></i>
                 <span>Главная</span>
             </a>
-            <a href="#achievements" class="nav-link" id="achievements-link">
+            <a href="achievements.html" class="nav-link" id="achievements-link">
                 <i class="ph ph-trophy"></i>
                 <span>Достижения</span>
             </a>
-            <a href="#profile" class="nav-link" id="profile-link">
+            <a href="profile.html" class="nav-link" id="profile-link">
                 <i class="ph ph-user-circle"></i>
-                <span>Вход/Регистрация</span>
+                <span>Профиль</span>
             </a>
         </nav>
         <main id="home-page" role="main" aria-live="polite">
@@ -136,7 +136,7 @@
                 <div class="profile-card">
                     <div class="avatar-selector">
                         <div class="avatar-wrapper">
-                            <img id="user-avatar" src="https://ui-avatars.com/api/?name=Гость&background=5B7FFF&color=fff" alt="Аватар пользователя" loading="lazy" width="100" height="100">
+                            <img id="user-avatar" src="https://ui-avatars.com/api/?name=Пользователь&background=5B7FFF&color=fff" alt="Аватар пользователя" loading="lazy" width="100" height="100">
                             <button class="avatar-edit-btn" id="change-avatar-btn">
                                 <i class="ph ph-pencil-simple"></i>
                             </button>
@@ -145,7 +145,7 @@
                     <div class="profile-details">
                         <div class="profile-field">
                             <label for="user-name-input">Имя:</label>
-                            <input id="user-name-input" value="Гость" aria-label="Имя пользователя" maxlength="20" readonly>
+                            <input id="user-name-input" value="Пользователь" aria-label="Имя пользователя" maxlength="20">
                         </div>
                         <div class="profile-field">
                             <span class="profile-label">Очки:</span>
@@ -155,9 +155,9 @@
                             <span class="profile-label">Серия:</span>
                             <span id="user-streak-profile" class="profile-value">0 дней</span>
                         </div>
-                        <button class="btn outline-btn" id="logout-btn" style="display: none;">
-                            <i class="ph ph-sign-out"></i>
-                            <span>Выйти</span>
+                        <button class="btn primary-btn" id="save-profile-btn">
+                            <i class="ph ph-check"></i>
+                            <span>Сохранить профиль</span>
                         </button>
                     </div>
                 </div>
@@ -258,15 +258,16 @@
             </div>
         </div>
         <div id="toast-container" role="alert" aria-live="assertive"></div>
+        <!-- Новое мобильное навигационное меню -->
         <nav class="mobile-nav" id="mobile-nav" role="navigation" aria-label="Мобильное меню">
             <div class="mobile-nav-links">
-                <a href="#home" class="mobile-nav-link" id="mobile-home-link" aria-label="Главная">
+                <a href="#" class="mobile-nav-link" id="mobile-home-link" aria-label="Главная">
                     <i class="ph ph-house"></i>
                 </a>
-                <a href="#achievements" class="mobile-nav-link" id="mobile-achievements-link" aria-label="Достижения">
+                <a href="#" class="mobile-nav-link" id="mobile-achievements-link" aria-label="Достижения">
                     <i class="ph ph-trophy"></i>
                 </a>
-                <a href="#profile" class="mobile-nav-link" id="mobile-profile-link" aria-label="Профиль">
+                <a href="#" class="mobile-nav-link" id="mobile-profile-link" aria-label="Профиль">
                     <i class="ph ph-user-circle"></i>
                 </a>
             </div>
@@ -280,52 +281,19 @@
             </div>
             <p>© 2025 @gregorybale. Все права защищены.</p>
         </div>
+<li></li><li></li><li></li>
+            </div>
     </footer>
-    <script src="/source/js/data.js" defer></script>
-    <script src="/source/js/script.js" defer></script>
-    <script src="/source/js/achievements.js" defer></script>
-    <script src="/source/js/ai.js" defer></script>
-    <script src="/source/js/activity.js" defer></script>
-    <script src="/source/js/notification.js" defer></script>
-    <script src="/source/js/telegram.js" defer></script>
+    <script src="data.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="achievements.js" defer></script>
+    <script src="ai.js" defer></script>
+    <script src="activity.js" defer></script>
+    <script src="notification.js" defer></script>
     <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="telegram.js" defer></script>
     <script>
-        // Мобильная навигация
-        const mobileHomeLink = document.querySelector('#mobile-home-link');
-        const mobileAchievementsLink = document.querySelector('#mobile-achievements-link');
-        const mobileProfileLink = document.querySelector('#mobile-profile-link');
-
-        mobileHomeLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
-            mobileHomeLink.setAttribute('aria-current', 'page');
-            document.getElementById('home-page').style.display = 'block';
-            document.getElementById('achievements-page').style.display = 'none';
-            document.getElementById('profile-page').style.display = 'none';
-            document.getElementById('lesson-page').style.display = 'none';
-        });
-
-        mobileAchievementsLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
-            mobileAchievementsLink.setAttribute('aria-current', 'page');
-            document.getElementById('home-page').style.display = 'none';
-            document.getElementById('achievements-page').style.display = 'block';
-            document.getElementById('profile-page').style.display = 'none';
-            document.getElementById('lesson-page').style.display = 'none';
-        });
-
-        mobileProfileLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => link.removeAttribute('aria-current'));
-            mobileProfileLink.setAttribute('aria-current', 'page');
-            document.getElementById('home-page').style.display = 'none';
-            document.getElementById('achievements-page').style.display = 'none';
-            document.getElementById('profile-page').style.display = 'block';
-            document.getElementById('lesson-page').style.display = 'none';
-        });
-    </script>
-        <script>
         // Удаляем старую функциональность гамбургер-меню, так как она больше не нужна
         // Новая навигация управляется через мобильное меню
         const mobileHomeLink = document.querySelector('#mobile-home-link');
